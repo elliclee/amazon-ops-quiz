@@ -1,0 +1,1669 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Amazon OPS Quiz</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #f5f6fa;
+    --card: #ffffff;
+    --border: #e2e5ed;
+    --text: #1a1d23;
+    --muted: #6b7280;
+    --accent: #3b5bdb;
+    --accent-light: #eef2ff;
+    --green: #2f9e44;
+    --green-light: #ebfbee;
+    --red: #c92a2a;
+    --red-light: #fff5f5;
+    --yellow: #e67700;
+    --yellow-light: #fff9db;
+    --radius: 10px;
+    --shadow: 0 1px 3px rgba(0,0,0,.08), 0 1px 2px rgba(0,0,0,.06);
+  }
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; font-size: 15px; line-height: 1.6; }
+
+  /* ── Header ── */
+  .site-header { background: var(--accent); color: #fff; padding: 18px 24px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 8px rgba(59,91,219,.3); }
+  .site-header h1 { font-size: 17px; font-weight: 700; letter-spacing: .3px; }
+  .overall-score { font-size: 13px; background: rgba(255,255,255,.15); padding: 5px 12px; border-radius: 20px; }
+
+  /* ── Tab Nav ── */
+  .tab-nav { display: flex; overflow-x: auto; background: #fff; border-bottom: 1px solid var(--border); padding: 0 16px; gap: 2px; scrollbar-width: none; position: sticky; top: 57px; z-index: 99; }
+  .tab-nav::-webkit-scrollbar { display: none; }
+  .tab-btn { flex-shrink: 0; padding: 12px 16px; border: none; background: none; cursor: pointer; font-size: 13px; color: var(--muted); font-weight: 500; border-bottom: 3px solid transparent; transition: all .2s; white-space: nowrap; }
+  .tab-btn:hover { color: var(--accent); }
+  .tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); font-weight: 600; }
+  .tab-btn .badge { display: inline-flex; align-items: center; justify-content: center; width: 18px; height: 18px; border-radius: 50%; font-size: 11px; margin-left: 6px; background: var(--border); color: var(--muted); }
+  .tab-btn.done .badge { background: var(--green); color: #fff; }
+  .tab-btn.partial .badge { background: var(--yellow); color: #fff; }
+
+  /* ── Content ── */
+  .content { max-width: 820px; margin: 0 auto; padding: 28px 20px 60px; }
+  .section { display: none; }
+  .section.active { display: block; }
+  .section-header { margin-bottom: 24px; }
+  .section-header h2 { font-size: 20px; font-weight: 700; color: var(--text); }
+  .section-header p { color: var(--muted); margin-top: 4px; font-size: 14px; }
+  .section-progress { margin-top: 12px; display: flex; align-items: center; gap: 10px; }
+  .progress-bar { flex: 1; height: 5px; background: var(--border); border-radius: 3px; overflow: hidden; }
+  .progress-fill { height: 100%; background: var(--accent); border-radius: 3px; transition: width .4s; }
+  .progress-text { font-size: 12px; color: var(--muted); white-space: nowrap; }
+
+  /* ── Question Card ── */
+  .q-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); margin-bottom: 20px; box-shadow: var(--shadow); overflow: hidden; transition: border-color .2s; }
+  .q-card.answered { border-color: var(--border); }
+  .q-header { padding: 16px 20px 12px; border-bottom: 1px solid var(--border); display: flex; gap: 12px; align-items: flex-start; }
+  .q-num { flex-shrink: 0; background: var(--accent-light); color: var(--accent); font-weight: 700; font-size: 12px; padding: 3px 9px; border-radius: 20px; margin-top: 2px; }
+  .q-type-badge { flex-shrink: 0; background: var(--bg); color: var(--muted); font-size: 11px; padding: 3px 8px; border-radius: 20px; margin-top: 2px; border: 1px solid var(--border); }
+  .q-title { font-weight: 600; font-size: 15px; line-height: 1.5; flex: 1; }
+  .q-body { padding: 16px 20px; }
+  .q-stem { color: var(--text); margin-bottom: 16px; line-height: 1.7; font-size: 14.5px; }
+  .q-stem code { background: var(--bg); padding: 2px 6px; border-radius: 4px; font-family: "SF Mono", Consolas, monospace; font-size: 13px; color: var(--accent); }
+  .q-stem em { color: var(--accent); font-style: normal; font-weight: 600; }
+
+  /* Options */
+  .options { display: flex; flex-direction: column; gap: 10px; }
+  .option-label { display: flex; align-items: flex-start; gap: 10px; padding: 12px 14px; border: 1.5px solid var(--border); border-radius: 8px; cursor: pointer; transition: all .15s; }
+  .option-label:hover { border-color: var(--accent); background: var(--accent-light); }
+  .option-label input[type=radio] { margin-top: 2px; accent-color: var(--accent); flex-shrink: 0; }
+  .option-text { font-size: 14px; line-height: 1.6; }
+  .option-label.correct { border-color: var(--green); background: var(--green-light); }
+  .option-label.wrong { border-color: var(--red); background: var(--red-light); }
+  .option-label.reveal-correct { border-color: var(--green); background: var(--green-light); }
+  .option-label input[type=radio]:disabled { cursor: not-allowed; }
+
+  /* Select dropdowns for classification */
+  .classify-table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  .classify-table th { background: var(--bg); padding: 8px 12px; text-align: left; font-weight: 600; font-size: 13px; color: var(--muted); border-bottom: 2px solid var(--border); }
+  .classify-table td { padding: 10px 12px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+  .classify-table tr:last-child td { border-bottom: none; }
+  .classify-table code { background: var(--bg); padding: 2px 6px; border-radius: 4px; font-size: 12.5px; color: var(--accent); }
+  .classify-table select { border: 1.5px solid var(--border); border-radius: 6px; padding: 5px 8px; font-size: 13px; background: #fff; color: var(--text); cursor: pointer; }
+  .classify-table select:focus { outline: none; border-color: var(--accent); }
+  .classify-table td.cell-correct { background: var(--green-light); color: var(--green); }
+  .classify-table td.cell-wrong { background: var(--red-light); color: var(--red); }
+  .classify-table td.cell-correct select, .classify-table td.cell-wrong select { border-color: transparent; background: transparent; }
+
+  /* Open questions */
+  .open-area textarea { width: 100%; padding: 12px; border: 1.5px solid var(--border); border-radius: 8px; font-size: 14px; font-family: inherit; resize: vertical; min-height: 100px; color: var(--text); transition: border-color .2s; }
+  .open-area textarea:focus { outline: none; border-color: var(--accent); }
+
+  /* Ref answer */
+  .ref-answer { margin-top: 14px; }
+  .ref-answer-toggle { display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; border: 1.5px solid var(--border); border-radius: 8px; background: none; cursor: pointer; font-size: 13px; color: var(--muted); font-weight: 500; transition: all .2s; }
+  .ref-answer-toggle:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-light); }
+  .ref-answer-toggle svg { transition: transform .2s; }
+  .ref-answer-toggle.open svg { transform: rotate(180deg); }
+  .ref-content { display: none; margin-top: 12px; padding: 16px; background: var(--yellow-light); border: 1px solid #ffd43b; border-radius: 8px; font-size: 14px; line-height: 1.75; }
+  .ref-content.show { display: block; }
+  .ref-content p { margin-bottom: 8px; }
+  .ref-content p:last-child { margin-bottom: 0; }
+  .ref-content table { width: 100%; border-collapse: collapse; margin: 8px 0; font-size: 13px; }
+  .ref-content table th { background: rgba(0,0,0,.05); padding: 7px 10px; text-align: left; font-weight: 600; }
+  .ref-content table td { padding: 7px 10px; border-top: 1px solid rgba(0,0,0,.08); }
+  .ref-content code { background: rgba(0,0,0,.07); padding: 1px 5px; border-radius: 3px; font-size: 12.5px; font-family: monospace; }
+  .ref-content ul, .ref-content ol { padding-left: 20px; }
+  .ref-content li { margin-bottom: 4px; }
+
+  /* Feedback */
+  .feedback { display: none; margin-top: 14px; padding: 14px 16px; border-radius: 8px; font-size: 14px; line-height: 1.7; }
+  .feedback.show { display: block; }
+  .feedback.correct { background: var(--green-light); border: 1px solid #b2f2bb; color: #1a4731; }
+  .feedback.wrong { background: var(--red-light); border: 1px solid #ffc9c9; color: #5c1a1a; }
+  .feedback-icon { font-weight: 700; margin-right: 6px; }
+
+  /* Submit button */
+  .q-footer { padding: 14px 20px; border-top: 1px solid var(--border); display: flex; gap: 10px; align-items: center; }
+  .btn-check { padding: 9px 20px; background: var(--accent); color: #fff; border: none; border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: 600; transition: opacity .2s; }
+  .btn-check:hover { opacity: .9; }
+  .btn-check:disabled { opacity: .4; cursor: not-allowed; }
+  .answered-badge { display: none; font-size: 12px; color: var(--green); font-weight: 600; gap: 4px; align-items: center; }
+  .answered-badge.show { display: flex; }
+
+  /* Final 20Q section */
+  .final-intro { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; margin-bottom: 24px; }
+  .final-intro h3 { font-weight: 700; margin-bottom: 6px; }
+  .final-intro p { color: var(--muted); font-size: 14px; }
+  .tf-list { display: flex; flex-direction: column; gap: 12px; }
+  .tf-item { background: var(--card); border: 1.5px solid var(--border); border-radius: 8px; padding: 16px; display: flex; gap: 16px; align-items: flex-start; transition: border-color .2s; }
+  .tf-item.correct { border-color: var(--green); background: var(--green-light); }
+  .tf-item.wrong { border-color: var(--red); background: var(--red-light); }
+  .tf-num { flex-shrink: 0; font-weight: 700; color: var(--muted); font-size: 13px; width: 28px; }
+  .tf-stem { flex: 1; font-size: 14px; line-height: 1.6; }
+  .tf-choices { display: flex; gap: 10px; margin-top: 10px; }
+  .tf-choice { display: flex; align-items: center; gap: 5px; cursor: pointer; padding: 5px 12px; border: 1.5px solid var(--border); border-radius: 6px; font-size: 13px; font-weight: 500; transition: all .2s; }
+  .tf-choice:hover { border-color: var(--accent); background: var(--accent-light); }
+  .tf-choice input { accent-color: var(--accent); }
+  .tf-result { display: none; margin-top: 8px; font-size: 13px; padding: 8px 10px; border-radius: 6px; }
+  .tf-result.show { display: block; }
+  .tf-result.correct { background: rgba(47,158,68,.12); color: var(--green); }
+  .tf-result.wrong { background: rgba(201,42,42,.1); color: var(--red); }
+  .final-btn-row { display: flex; gap: 12px; align-items: center; margin-top: 24px; }
+  .btn-submit-all { padding: 11px 28px; background: var(--accent); color: #fff; border: none; border-radius: 8px; cursor: pointer; font-size: 15px; font-weight: 700; transition: opacity .2s; }
+  .btn-submit-all:hover { opacity: .9; }
+  .btn-reset { padding: 11px 20px; background: none; color: var(--muted); border: 1.5px solid var(--border); border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: 500; transition: all .2s; }
+  .btn-reset:hover { border-color: var(--red); color: var(--red); }
+  .final-score-display { display: none; margin-top: 20px; padding: 20px 24px; background: var(--card); border: 1.5px solid var(--border); border-radius: var(--radius); text-align: center; }
+  .final-score-display.show { display: block; }
+  .score-big { font-size: 48px; font-weight: 800; color: var(--accent); }
+  .score-label { font-size: 14px; color: var(--muted); margin-top: 4px; }
+  .score-grade { font-size: 18px; font-weight: 700; margin-top: 8px; }
+
+  /* Section score */
+  .section-score { display: none; margin-top: 24px; padding: 16px 20px; background: var(--accent-light); border: 1px solid #c5d3f8; border-radius: 8px; font-size: 14px; color: var(--accent); font-weight: 600; }
+  .section-score.show { display: block; }
+
+  @media (max-width: 600px) {
+    .q-header { flex-wrap: wrap; }
+    .content { padding: 16px 12px 60px; }
+  }
+</style>
+</head>
+<body>
+
+<header class="site-header">
+  <h1>Amazon OPS Quiz</h1>
+  <div class="overall-score" id="overallScore">0 / 42 题</div>
+</header>
+
+<nav class="tab-nav" id="tabNav">
+  <button class="tab-btn active" data-section="s1" onclick="switchSection('s1')">第一期<span class="badge" id="b1">7</span></button>
+  <button class="tab-btn" data-section="s2" onclick="switchSection('s2')">第二期<span class="badge" id="b2">7</span></button>
+  <button class="tab-btn" data-section="s3" onclick="switchSection('s3')">第三期<span class="badge" id="b3">7</span></button>
+  <button class="tab-btn" data-section="s4" onclick="switchSection('s4')">第四期<span class="badge" id="b4">7</span></button>
+  <button class="tab-btn" data-section="s5" onclick="switchSection('s5')">第五期<span class="badge" id="b5">7</span></button>
+  <button class="tab-btn" data-section="s6" onclick="switchSection('s6')">第六期<span class="badge" id="b6">7</span></button>
+  <button class="tab-btn" data-section="s7" onclick="switchSection('s7')">第七期<span class="badge" id="b7">7</span></button>
+  <button class="tab-btn" data-section="final" onclick="switchSection('final')">自测 30 题<span class="badge" id="bfinal">30</span></button>
+</nav>
+
+<main class="content">
+
+<!-- ═══════════════════ 第一期 ═══════════════════ -->
+<section class="section active" id="s1">
+  <div class="section-header">
+    <h2>第一期 — 系统认知：Amazon 在做什么</h2>
+    <p>核心目标：建立"意图匹配"思维，区分旧思维与新思维</p>
+    <div class="section-progress"><div class="progress-bar"><div class="progress-fill" id="prog-s1" style="width:0%"></div></div><span class="progress-text" id="pt-s1">0 / 7</span></div>
+  </div>
+
+  <!-- Q1-1 -->
+  <div class="q-card" id="card-s1q1">
+    <div class="q-header"><span class="q-num">1-1</span><span class="q-type-badge">单选题</span><div class="q-title">以下关于亚马逊排名机制的说法，哪个是正确的？</div></div>
+    <div class="q-body">
+      <div class="q-stem">请选择正确的选项，并思考理由：</div>
+      <div class="options" id="opts-s1q1">
+        <label class="option-label"><input type="radio" name="s1q1" value="A"><span class="option-text">A. 关键词密度越高，排名越好，所以标题和五点都要尽量多放关键词</span></label>
+        <label class="option-label"><input type="radio" name="s1q1" value="B"><span class="option-text">B. 系统在把用户的搜索词和商品能解决的问题做匹配，关键词是信号，不是排名的直接原因</span></label>
+      </div>
+      <div class="feedback" id="fb-s1q1"></div>
+    </div>
+    <div class="q-footer">
+      <button class="btn-check" onclick="checkChoice('s1q1')">提交答案</button>
+      <span class="answered-badge" id="done-s1q1">✓ 已作答</span>
+    </div>
+  </div>
+
+  <!-- Q1-2 -->
+  <div class="q-card" id="card-s1q2">
+    <div class="q-header"><span class="q-num">1-2</span><span class="q-type-badge">分类题</span><div class="q-title">A9 / COSMO / Rufus 各层负责什么？</div></div>
+    <div class="q-body">
+      <div class="q-stem">把以下描述拖放（选择）到对应的系统层：</div>
+      <table class="classify-table">
+        <thead><tr><th>系统层</th><th>这一层负责什么（请选择）</th></tr></thead>
+        <tbody>
+          <tr><td><strong>A9</strong></td><td><select id="cl-s1q2-1"><option value="">— 请选择 —</option><option>基础词语索引，把商品和用户搜索词做初步匹配</option><option>理解商品适合什么场景、人群和问题，打意图标签</option><option>回答用户复杂问题，找到最像答案的内容，促成转化</option></select></td></tr>
+          <tr><td><strong>COSMO</strong></td><td><select id="cl-s1q2-2"><option value="">— 请选择 —</option><option>基础词语索引，把商品和用户搜索词做初步匹配</option><option>理解商品适合什么场景、人群和问题，打意图标签</option><option>回答用户复杂问题，找到最像答案的内容，促成转化</option></select></td></tr>
+          <tr><td><strong>Rufus</strong></td><td><select id="cl-s1q2-3"><option value="">— 请选择 —</option><option>基础词语索引，把商品和用户搜索词做初步匹配</option><option>理解商品适合什么场景、人群和问题，打意图标签</option><option>回答用户复杂问题，找到最像答案的内容，促成转化</option></select></td></tr>
+        </tbody>
+      </table>
+      <div class="feedback" id="fb-s1q2"></div>
+    </div>
+    <div class="q-footer">
+      <button class="btn-check" onclick="checkClassify('s1q2')">提交答案</button>
+      <span class="answered-badge" id="done-s1q2">✓ 已作答</span>
+    </div>
+  </div>
+
+  <!-- Q1-3 -->
+  <div class="q-card" id="card-s1q3">
+    <div class="q-header"><span class="q-num">1-3</span><span class="q-type-badge">开放题</span><div class="q-title">你过去踩过的 Listing 坑，用本期框架解释</div></div>
+    <div class="q-body">
+      <div class="q-stem">你过去在 Listing 优化上踩过的最大坑是什么？用 A9 / COSMO / Rufus 框架，解释它为什么会发生。（3-5 句话）</div>
+      <div class="open-area"><textarea placeholder="写下你的分析..." id="ta-s1q3"></textarea></div>
+      <div class="ref-answer">
+        <button class="ref-answer-toggle" onclick="toggleRef('ref-s1q3',this)">
+          <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+          查看参考思路
+        </button>
+        <div class="ref-content" id="ref-s1q3">
+          <p><strong>常见的坑 & 框架解释：</strong></p>
+          <ul>
+            <li><strong>堆关键词被降权</strong>：过度追求 A9 词语匹配，忽视了 COSMO 需要的意图信号，导致系统识别不到这件商品解决什么问题。</li>
+            <li><strong>改了标题但没效果</strong>：只改了 A9 层的词，没有同时调整 COSMO 需要的场景/人群/痛点信号，系统意图标签没有更新。</li>
+            <li><strong>五点写得很好但转化低</strong>：五点里有很多描述性内容，但没有 Rufus 能引用的量化短语，用户问 Rufus "这个好不好"，Rufus 找不到具体答案。</li>
+            <li><strong>核心结论</strong>：三层系统需要同时满足。只优化其中一层，另外两层没有对应信号，效果有限。</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+    <div class="q-footer">
+      <button class="btn-check" onclick="markOpen('s1q3')">完成作答</button>
+      <span class="answered-badge" id="done-s1q3">✓ 已作答</span>
+    </div>
+  </div>
+
+  <!-- Q1-4 -->
+  <div class="q-card" id="card-s1q4">
+    <div class="q-header"><span class="q-num">1-4</span><span class="q-type-badge">单选题</span><div class="q-title">COSMO 关系中，哪种对购买决策影响最直接？</div></div>
+    <div class="q-body">
+      <div class="q-stem">COSMO 15 种意图关系里，哪种关系类型对驱动购买决策影响最直接？</div>
+      <div class="options" id="opts-s1q4">
+        <label class="option-label"><input type="radio" name="s1q4" value="A"><span class="option-text">A. <code>used_for_eve</code>（商品适合某类事件/场景）</span></label>
+        <label class="option-label"><input type="radio" name="s1q4" value="B"><span class="option-text">B. <code>capable_of</code>（商品具备某种能力）</span></label>
+        <label class="option-label"><input type="radio" name="s1q4" value="C"><span class="option-text">C. <code>xIs_a</code>（用户的身份/角色认同）</span></label>
+        <label class="option-label"><input type="radio" name="s1q4" value="D"><span class="option-text">D. <code>used_with</code>（商品通常与其他商品搭配）</span></label>
+      </div>
+      <div class="feedback" id="fb-s1q4"></div>
+    </div>
+    <div class="q-footer">
+      <button class="btn-check" onclick="checkChoice('s1q4')">提交答案</button>
+      <span class="answered-badge" id="done-s1q4">✓ 已作答</span>
+    </div>
+  </div>
+  <!-- Q1-5 -->
+  <div class="q-card" id="card-s1q5">
+    <div class="q-header"><span class="q-num">1-5</span><span class="q-type-badge">单选题</span><div class="q-title">Typicality 与 Plausibility 的关系</div></div>
+    <div class="q-body">
+      <div class="q-stem">以下关于 Typicality（典型性）和 Plausibility（合理性）的说法，哪个<em>正确</em>？</div>
+      <div class="options" id="opts-s1q5">
+        <label class="option-label"><input type="radio" name="s1q5" value="A"><span class="option-text">A. 两者高度相关，合理性高的关系典型性也一定高</span></label>
+        <label class="option-label"><input type="radio" name="s1q5" value="B"><span class="option-text">B. 两者是独立维度（ρ=0.32），CapableOf/UsedFor 典型性约 90%，SimilarTo/DefinedAs 最低</span></label>
+        <label class="option-label"><input type="radio" name="s1q5" value="C"><span class="option-text">C. 合理性更重要，合理的关系会被 COSMO 自动赋予高权重</span></label>
+        <label class="option-label"><input type="radio" name="s1q5" value="D"><span class="option-text">D. 两者可以互换，写 Listing 时选哪个都一样</span></label>
+      </div>
+      <div class="feedback" id="fb-s1q5"></div>
+    </div>
+    <div class="q-footer">
+      <button class="btn-check" onclick="checkChoice('s1q5')">提交答案</button>
+      <span class="answered-badge" id="done-s1q5">✓ 已作答</span>
+    </div>
+  </div>
+  <!-- Q1-6 -->
+  <div class="q-card" id="card-s1q6">
+    <div class="q-header"><span class="q-num">1-6</span><span class="q-type-badge">多选题</span><div class="q-title">以下哪些是「商品主语」关系？</div></div>
+    <div class="q-body">
+      <div class="q-stem">以下哪些属于 COSMO 15 种关系中以<em>商品为主语</em>的关系类型？（多选，选出所有正确答案）</div>
+      <div class="options" id="opts-s1q6">
+        <label class="option-label"><input type="checkbox" name="s1q6" value="A"><span class="option-text">A. <code>capable_of</code>（商品能做什么）</span></label>
+        <label class="option-label"><input type="checkbox" name="s1q6" value="B"><span class="option-text">B. <code>xIs_a</code>（用户的身份/角色）</span></label>
+        <label class="option-label"><input type="checkbox" name="s1q6" value="C"><span class="option-text">C. <code>used_for_func</code>（商品的核心功能）</span></label>
+        <label class="option-label"><input type="checkbox" name="s1q6" value="D"><span class="option-text">D. <code>xWant</code>（用户的深层需求）</span></label>
+        <label class="option-label"><input type="checkbox" name="s1q6" value="E"><span class="option-text">E. <code>used_in_loc</code>（商品在什么地点使用）</span></label>
+      </div>
+      <div class="feedback" id="fb-s1q6"></div>
+    </div>
+    <div class="q-footer">
+      <button class="btn-check" onclick="checkMulti('s1q6')">提交答案</button>
+      <span class="answered-badge" id="done-s1q6">✓ 已作答</span>
+    </div>
+  </div>
+  <!-- Q1-7 -->
+  <div class="q-card" id="card-s1q7">
+    <div class="q-header"><span class="q-num">1-7</span><span class="q-type-badge">分类题</span><div class="q-title">COSMO 关系主语分类</div></div>
+    <div class="q-body">
+      <div class="q-stem">请判断以下 COSMO 关系属于「商品主语」还是「用户主语」关系：</div>
+      <table class="classify-table">
+        <thead><tr><th>项目</th><th>类型（请选择）</th></tr></thead>
+        <tbody>
+          <tr><td><code>capable_of</code></td><td><select id="cl-s1q7-1"><option value="">— 请选择 —</option><option>商品主语</option><option>用户主语</option></select></td></tr>
+          <tr><td><code>xIs_a</code></td><td><select id="cl-s1q7-2"><option value="">— 请选择 —</option><option>商品主语</option><option>用户主语</option></select></td></tr>
+          <tr><td><code>used_in_loc</code></td><td><select id="cl-s1q7-3"><option value="">— 请选择 —</option><option>商品主语</option><option>用户主语</option></select></td></tr>
+          <tr><td><code>xWant</code></td><td><select id="cl-s1q7-4"><option value="">— 请选择 —</option><option>商品主语</option><option>用户主语</option></select></td></tr>
+          <tr><td><code>xInterested_in</code></td><td><select id="cl-s1q7-5"><option value="">— 请选择 —</option><option>商品主语</option><option>用户主语</option></select></td></tr>
+        </tbody>
+      </table>
+      <div class="feedback" id="fb-s1q7"></div>
+    </div>
+    <div class="q-footer">
+      <button class="btn-check" onclick="checkClassify('s1q7')">提交答案</button>
+      <span class="answered-badge" id="done-s1q7">✓ 已作答</span>
+    </div>
+  </div>
+  <div class="section-score" id="score-s1"></div>
+</section>
+
+<!-- ═══════════════════ 第二期 ═══════════════════ -->
+<section class="section" id="s2">
+  <div class="section-header">
+    <h2>第二期 — 用户意图与 Query 思维</h2>
+    <p>核心目标：区分显式/隐式意图，用 Query 思维替代关键词思维</p>
+    <div class="section-progress"><div class="progress-bar"><div class="progress-fill" id="prog-s2" style="width:0%"></div></div><span class="progress-text" id="pt-s2">0 / 7</span></div>
+  </div>
+
+  <!-- Q2-1 -->
+  <div class="q-card" id="card-s2q1">
+    <div class="q-header"><span class="q-num">2-1</span><span class="q-type-badge">单选题</span><div class="q-title">哪个搜索词的隐式属性强度最高？</div></div>
+    <div class="q-body">
+      <div class="q-stem">根据论文数据，84% 的搜索词含有隐式属性。以下哪个词的<em>隐式属性强度最高</em>（即用户未说出但系统和用户都默认最多属性）？</div>
+      <div class="options" id="opts-s2q1">
+        <label class="option-label"><input type="radio" name="s2q1" value="A"><span class="option-text">A. <code>rubber mat for gym</code>（健身房橡胶垫）</span></label>
+        <label class="option-label"><input type="radio" name="s2q1" value="B"><span class="option-text">B. <code>waterproof running shoes men</code>（男款防水跑步鞋）</span></label>
+        <label class="option-label"><input type="radio" name="s2q1" value="C"><span class="option-text">C. <code>wedding dress</code>（婚纱）</span></label>
+        <label class="option-label"><input type="radio" name="s2q1" value="D"><span class="option-text">D. <code>anti-theft sling bag for travel</code>（旅行防盗斜挎包）</span></label>
+      </div>
+      <div class="feedback" id="fb-s2q1"></div>
+    </div>
+    <div class="q-footer">
+      <button class="btn-check" onclick="checkChoice('s2q1')">提交答案</button>
+      <span class="answered-badge" id="done-s2q1">✓ 已作答</span>
+    </div>
+  </div>
+
+  <!-- Q2-2 -->
+  <div class="q-card" id="card-s2q2">
+    <div class="q-header"><span class="q-num">2-2</span><span class="q-type-badge">分类题</span><div class="q-title">意图词层级分类（L1–L6）</div></div>
+    <div class="q-body">
+      <div class="q-stem">将以下搜索词拖拽（选择）到它在意图漏斗中对应的层级：</div>
+      <table class="classify-table">
+        <thead><tr><th>搜索词</th><th>意图层级（L1=模糊 → L6=品牌型号）</th></tr></thead>
+        <tbody>
+          <tr><td><code>bag</code></td><td><select id="cl-s2q2-1"><option value="">— 请选择 —</option><option>L1 模糊意图</option><option>L2 品名品类</option><option>L3 属性卖点</option><option>L4 特定场景</option><option>L5 目标人群</option><option>L6 品牌型号</option></select></td></tr>
+          <tr><td><code>anti-theft sling bag</code></td><td><select id="cl-s2q2-2"><option value="">— 请选择 —</option><option>L1 模糊意图</option><option>L2 品名品类</option><option>L3 属性卖点</option><option>L4 特定场景</option><option>L5 目标人群</option><option>L6 品牌型号</option></select></td></tr>
+          <tr><td><code>anti-theft sling bag for travel</code></td><td><select id="cl-s2q2-3"><option value="">— 请选择 —</option><option>L1 模糊意图</option><option>L2 品名品类</option><option>L3 属性卖点</option><option>L4 特定场景</option><option>L5 目标人群</option><option>L6 品牌型号</option></select></td></tr>
+          <tr><td><code>NIID FINO V</code></td><td><select id="cl-s2q2-4"><option value="">— 请选择 —</option><option>L1 模糊意图</option><option>L2 品名品类</option><option>L3 属性卖点</option><option>L4 特定场景</option><option>L5 目标人群</option><option>L6 品牌型号</option></select></td></tr>
+          <tr><td><code>sling bag men</code></td><td><select id="cl-s2q2-5"><option value="">— 请选择 —</option><option>L1 模糊意图</option><option>L2 品名品类</option><option>L3 属性卖点</option><option>L4 特定场景</option><option>L5 目标人群</option><option>L6 品牌型号</option></select></td></tr>
+        </tbody>
+      </table>
+      <div class="feedback" id="fb-s2q2"></div>
+    </div>
+    <div class="q-footer">
+      <button class="btn-check" onclick="checkClassify('s2q2')">提交答案</button>
+      <span class="answered-badge" id="done-s2q2">✓ 已作答</span>
+    </div>
+  </div>
+
+  <!-- Q2-3 -->
+  <div class="q-card" id="card-s2q3">
+    <div class="q-header"><span class="q-num">2-3</span><span class="q-type-badge">单选题</span><div class="q-title">哪个词最可能是高考量度词（HC Query）？</div></div>
+    <div class="q-body">
+      <div class="q-stem">Amazon 系统以 96% 精准率识别高考量度查询（用户需要大量信息才能决策的词）。以下哪个词<em>最不可能</em>是高考量度词？</div>
+      <div class="options" id="opts-s2q3">
+        <label class="option-label"><input type="radio" name="s2q3" value="A"><span class="option-text">A. <code>fujifilm x100vi</code></span></label>
+        <label class="option-label"><input type="radio" name="s2q3" value="B"><span class="option-text">B. <code>standing desk ergonomic</code></span></label>
+        <label class="option-label"><input type="radio" name="s2q3" value="C"><span class="option-text">C. <code>toothpick</code></span></label>
+        <label class="option-label"><input type="radio" name="s2q3" value="D"><span class="option-text">D. <code>anti-theft travel bag</code></span></label>
+      </div>
+      <div class="feedback" id="fb-s2q3"></div>
+    </div>
+    <div class="q-footer">
+      <button class="btn-check" onclick="checkChoice('s2q3')">提交答案</button>
+      <span class="answered-badge" id="done-s2q3">✓ 已作答</span>
+    </div>
+  </div>
+
+  <!-- Q2-4 -->
+  <div class="q-card" id="card-s2q4">
+    <div class="q-header"><span class="q-num">2-4</span><span class="q-type-badge">单选题</span><div class="q-title">查询改写系统的方向性</div></div>
+    <div class="q-body">
+      <div class="q-stem">以下关于 Amazon 查询改写方向性的说法，哪个<em>正确</em>？</div>
+      <div class="options" id="opts-s2q4">
+        <label class="option-label"><input type="radio" name="s2q4" value="A"><span class="option-text">A. 系统把 head query 改写成 tail query（从宽到精）</span></label>
+        <label class="option-label"><input type="radio" name="s2q4" value="B"><span class="option-text">B. 系统把 tail query 改写成 head query（从精到宽），且是单向改写</span></label>
+        <label class="option-label"><input type="radio" name="s2q4" value="C"><span class="option-text">C. 系统双向改写，head ↔ tail 互相转化</span></label>
+        <label class="option-label"><input type="radio" name="s2q4" value="D"><span class="option-text">D. 改写只用于广告投放，自然搜索不涉及改写</span></label>
+      </div>
+      <div class="feedback" id="fb-s2q4"></div>
+    </div>
+    <div class="q-footer">
+      <button class="btn-check" onclick="checkChoice('s2q4')">提交答案</button>
+      <span class="answered-badge" id="done-s2q4">✓ 已作答</span>
+    </div>
+  </div>
+  <!-- Q2-5 -->
+  <div class="q-card" id="card-s2q5">
+    <div class="q-header"><span class="q-num">2-5</span><span class="q-type-badge">单选题</span><div class="q-title">会话上下文追踪几条历史查询？</div></div>
+    <div class="q-body">
+      <div class="q-stem">Amazon 会话感知查询改写系统，追踪用户购物会话内平均多少条历史查询来推断意图漂移？</div>
+      <div class="options" id="opts-s2q5">
+        <label class="option-label"><input type="radio" name="s2q5" value="A"><span class="option-text">A. 1-2 条</span></label>
+        <label class="option-label"><input type="radio" name="s2q5" value="B"><span class="option-text">B. 平均 4 条</span></label>
+        <label class="option-label"><input type="radio" name="s2q5" value="C"><span class="option-text">C. 6-8 条</span></label>
+        <label class="option-label"><input type="radio" name="s2q5" value="D"><span class="option-text">D. 追踪所有历史，没有数量上限</span></label>
+      </div>
+      <div class="feedback" id="fb-s2q5"></div>
+    </div>
+    <div class="q-footer">
+      <button class="btn-check" onclick="checkChoice('s2q5')">提交答案</button>
+      <span class="answered-badge" id="done-s2q5">✓ 已作答</span>
+    </div>
+  </div>
+  <!-- Q2-6 -->
+  <div class="q-card" id="card-s2q6">
+    <div class="q-header"><span class="q-num">2-6</span><span class="q-type-badge">多选题</span><div class="q-title">wedding dress 的隐式属性有哪些？</div></div>
+    <div class="q-body">
+      <div class="q-stem">用户搜索 <code>wedding dress</code>，系统能从这两个词推断出哪些隐式属性？（多选）</div>
+      <div class="options" id="opts-s2q6">
+        <label class="option-label"><input type="checkbox" name="s2q6" value="A"><span class="option-text">A. 白色 / 象牙白</span></label>
+        <label class="option-label"><input type="checkbox" name="s2q6" value="B"><span class="option-text">B. 正式款式</span></label>
+        <label class="option-label"><input type="checkbox" name="s2q6" value="C"><span class="option-text">C. 长裙（非迷你/短款）</span></label>
+        <label class="option-label"><input type="checkbox" name="s2q6" value="D"><span class="option-text">D. 棉质面料</span></label>
+        <label class="option-label"><input type="checkbox" name="s2q6" value="E"><span class="option-text">E. 新娘场景 / 婚礼场合</span></label>
+      </div>
+      <div class="feedback" id="fb-s2q6"></div>
+    </div>
+    <div class="q-footer">
+      <button class="btn-check" onclick="checkMulti('s2q6')">提交答案</button>
+      <span class="answered-badge" id="done-s2q6">✓ 已作答</span>
+    </div>
+  </div>
+  <!-- Q2-7 -->
+  <div class="q-card" id="card-s2q7">
+    <div class="q-header"><span class="q-num">2-7</span><span class="q-type-badge">分类题</span><div class="q-title">显式 vs 隐式属性判断</div></div>
+    <div class="q-body">
+      <div class="q-stem">对于搜索词 <code>anti-theft sling bag for travel</code>，判断以下属性是显式还是隐式：</div>
+      <table class="classify-table">
+        <thead><tr><th>项目</th><th>类型（请选择）</th></tr></thead>
+        <tbody>
+          <tr><td>anti-theft（防盗）</td><td><select id="cl-s2q7-1"><option value="">— 请选择 —</option><option>显式（用户已说出）</option><option>隐式（用户未说但默认存在）</option></select></td></tr>
+          <tr><td>for travel（旅行场景）</td><td><select id="cl-s2q7-2"><option value="">— 请选择 —</option><option>显式（用户已说出）</option><option>隐式（用户未说但默认存在）</option></select></td></tr>
+          <tr><td>lightweight（轻量）</td><td><select id="cl-s2q7-3"><option value="">— 请选择 —</option><option>显式（用户已说出）</option><option>隐式（用户未说但默认存在）</option></select></td></tr>
+          <tr><td>low profile design（低调外观）</td><td><select id="cl-s2q7-4"><option value="">— 请选择 —</option><option>显式（用户已说出）</option><option>隐式（用户未说但默认存在）</option></select></td></tr>
+          <tr><td>fits laptop（能放笔记本）</td><td><select id="cl-s2q7-5"><option value="">— 请选择 —</option><option>显式（用户已说出）</option><option>隐式（用户未说但默认存在）</option></select></td></tr>
+        </tbody>
+      </table>
+      <div class="feedback" id="fb-s2q7"></div>
+    </div>
+    <div class="q-footer">
+      <button class="btn-check" onclick="checkClassify('s2q7')">提交答案</button>
+      <span class="answered-badge" id="done-s2q7">✓ 已作答</span>
+    </div>
+  </div>
+  <div class="section-score" id="score-s2"></div>
+</section>
+
+<!-- ═══════════════════ 第三期 ═══════════════════ -->
+<section class="section" id="s3">
+  <div class="section-header">
+    <h2>第三期 — SSPPS 建模</h2>
+    <p>核心目标：独立完成 SSPPS 建模，写出商品解决方案定义句</p>
+    <div class="section-progress"><div class="progress-bar"><div class="progress-fill" id="prog-s3" style="width:0%"></div></div><span class="progress-text" id="pt-s3">0 / 7</span></div>
+  </div>
+
+  <!-- Q3-1 -->
+  <div class="q-card" id="card-s3q1">
+    <div class="q-header"><span class="q-num">3-1</span><span class="q-type-badge">单选题</span><div class="q-title">哪个最适合作为防盗斜挎包的 S①？</div></div>
+    <div class="q-body">
+      <div class="q-stem">产品特点：防盗（隐藏拉链结构）、轻量（400g）、适合 13 寸笔记本、黑色外观。<br>根据 <em>Typicality（典型性）</em> 原则，哪个最适合作为 SSPPS 的 S①（核心卖点）？</div>
+      <div class="options" id="opts-s3q1">
+        <label class="option-label"><input type="radio" name="s3q1" value="A"><span class="option-text">A. 黑色时尚外观</span></label>
+        <label class="option-label"><input type="radio" name="s3q1" value="B"><span class="option-text">B. 防盗（隐藏拉链结构，外部物理上无法打开）</span></label>
+        <label class="option-label"><input type="radio" name="s3q1" value="C"><span class="option-text">C. 轻量 400g</span></label>
+        <label class="option-label"><input type="radio" name="s3q1" value="D"><span class="option-text">D. 适合 13 寸笔记本</span></label>
+      </div>
+      <div class="feedback" id="fb-s3q1"></div>
+    </div>
+    <div class="q-footer">
+      <button class="btn-check" onclick="checkChoice('s3q1')">提交答案</button>
+      <span class="answered-badge" id="done-s3q1">✓ 已作答</span>
+    </div>
+  </div>
+
+  <!-- Q3-2 -->
+  <div class="q-card" id="card-s3q2">
+    <div class="q-header"><span class="q-num">3-2</span><span class="q-type-badge">开放题</span><div class="q-title">为你的产品完成 SSPPS 建模</div></div>
+    <div class="q-body">
+      <div class="q-stem">拿出你手上的一款产品，独立填写以下 SSPPS 五层，最后写出一句商品解决方案定义句：</div>
+      <div class="open-area"><textarea placeholder="S① 核心卖点：&#10;S  核心场景：&#10;P  核心人群：&#10;P  核心痛点（第几层）：&#10;S② 量化解决方案：&#10;&#10;定义句：" id="ta-s3q2" style="min-height:160px"></textarea></div>
+      <div class="ref-answer">
+        <button class="ref-answer-toggle" onclick="toggleRef('ref-s3q2',this)">
+          <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+          查看参考示例（防盗斜挎包）
+        </button>
+        <div class="ref-content" id="ref-s3q2">
+          <table>
+            <tr><th>SSPPS 层</th><th>示例答案</th></tr>
+            <tr><td><strong>S①</strong></td><td>防盗：隐藏式后置拉链，外部物理上无法打开</td></tr>
+            <tr><td><strong>S</strong></td><td>商务出行 + 日常通勤（机场/地铁）</td></tr>
+            <tr><td><strong>P</strong></td><td>商务差旅男性，频繁飞行</td></tr>
+            <tr><td><strong>P</strong></td><td>在人群中担心被扒，机场安检麻烦（深层：失控感/安全焦虑）</td></tr>
+            <tr><td><strong>S②</strong></td><td>400g，13"笔记本，隐藏拉链，TSA 免取出</td></tr>
+          </table>
+          <p style="margin-top:10px"><strong>定义句：</strong>A 400g anti-theft sling that fits your 13" laptop and passes airport security without unpacking — for the traveler who moves through crowds without worry.</p>
+          <p style="margin-top:8px;color:#92400e;font-size:13px">自检三问：S② 有没有数字？P 痛点到了第几层？定义句能不能在 10 秒内被陌生人听懂？</p>
+        </div>
+      </div>
+    </div>
+    <div class="q-footer">
+      <button class="btn-check" onclick="markOpen('s3q2')">完成作答</button>
+      <span class="answered-badge" id="done-s3q2">✓ 已作答</span>
+    </div>
+  </div>
+
+  <!-- Q3-3 -->
+  <div class="q-card" id="card-s3q3">
+    <div class="q-header"><span class="q-num">3-3</span><span class="q-type-badge">挑战题</span><div class="q-title">找出这个定义句的问题并改写</div></div>
+    <div class="q-body">
+      <div class="q-stem">以下是一个运营同学写的商品解决方案定义句，请找出至少 3 个问题并改写：<br><br><em>原句："这款多功能斜挎包采用优质材料，大容量设计，适合各种场合使用，是您日常出行的好伴侣。"</em></div>
+      <div class="open-area"><textarea placeholder="问题1：&#10;问题2：&#10;问题3：&#10;&#10;改写后：" id="ta-s3q3" style="min-height:150px"></textarea></div>
+      <div class="ref-answer">
+        <button class="ref-answer-toggle" onclick="toggleRef('ref-s3q3',this)">
+          <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+          查看参考答案
+        </button>
+        <div class="ref-content" id="ref-s3q3">
+          <p><strong>问题清单：</strong></p>
+          <ol>
+            <li>「多功能」= SimilarTo 类写法，Typicality 最低（47%），COSMO 无法识别有效意图节点</li>
+            <li>「各种场合」= S（场景）为空，COSMO 无法打 <code>used_for_eve</code> 标签</li>
+            <li>「大容量设计」= 无量化，S② 为空，Rufus 无法引用（"大"是多大？）</li>
+            <li>「好伴侣」= 情绪词，无法触发任何 COSMO 关系节点</li>
+            <li>全句没有 S①（核心差异化卖点）也没有 P（人群和痛点）</li>
+          </ol>
+          <p style="margin-top:10px"><strong>改写示例：</strong>A lightweight anti-theft sling bag with a hidden compartment — fits your 13" laptop and daily essentials for business travelers who commute through busy airports and crowded cities.</p>
+        </div>
+      </div>
+    </div>
+    <div class="q-footer">
+      <button class="btn-check" onclick="markOpen('s3q3')">完成作答</button>
+      <span class="answered-badge" id="done-s3q3">✓ 已作答</span>
+    </div>
+  </div>
+
+  <!-- Q3-4 -->
+  <div class="q-card" id="card-s3q4">
+    <div class="q-header"><span class="q-num">3-4</span><span class="q-type-badge">单选题</span><div class="q-title">S② 最主要对应哪个算法系统？</div></div>
+    <div class="q-body">
+      <div class="q-stem">SSPPS 模型里，S②（量化解决方案层）最主要对应哪个 Amazon 算法系统？</div>
+      <div class="options" id="opts-s3q4">
+        <label class="option-label"><input type="radio" name="s3q4" value="A"><span class="option-text">A. A9（词法匹配系统）</span></label>
+        <label class="option-label"><input type="radio" name="s3q4" value="B"><span class="option-text">B. COSMO（意图知识图谱）</span></label>
+        <label class="option-label"><input type="radio" name="s3q4" value="C"><span class="option-text">C. Rufus（AI 问答系统）</span></label>
+        <label class="option-label"><input type="radio" name="s3q4" value="D"><span class="option-text">D. Filter 排序系统</span></label>
+      </div>
+      <div class="feedback" id="fb-s3q4"></div>
+    </div>
+    <div class="q-footer">
+      <button class="btn-check" onclick="checkChoice('s3q4')">提交答案</button>
+      <span class="answered-badge" id="done-s3q4">✓ 已作答</span>
+    </div>
+  </div>
+  <!-- Q3-5 -->
+  <div class="q-card" id="card-s3q5">
+    <div class="q-header"><span class="q-num">3-5</span><span class="q-type-badge">分类题</span><div class="q-title">SSPPS 五层与 COSMO 关系对应</div></div>
+    <div class="q-body">
+      <div class="q-stem">请将 SSPPS 五层与最主要对应的 COSMO 关系类型匹配：</div>
+      <table class="classify-table">
+        <thead><tr><th>项目</th><th>类型（请选择）</th></tr></thead>
+        <tbody>
+          <tr><td>S①（核心卖点/能力）</td><td><select id="cl-s3q5-1"><option value="">— 请选择 —</option><option>capable_of</option><option>used_for_eve / used_in_loc</option><option>xIs_a / used_for_aud</option><option>xWant</option><option>Rufus QA 引用层</option></select></td></tr>
+          <tr><td>S（场景）</td><td><select id="cl-s3q5-2"><option value="">— 请选择 —</option><option>capable_of</option><option>used_for_eve / used_in_loc</option><option>xIs_a / used_for_aud</option><option>xWant</option><option>Rufus QA 引用层</option></select></td></tr>
+          <tr><td>P（人群）</td><td><select id="cl-s3q5-3"><option value="">— 请选择 —</option><option>capable_of</option><option>used_for_eve / used_in_loc</option><option>xIs_a / used_for_aud</option><option>xWant</option><option>Rufus QA 引用层</option></select></td></tr>
+          <tr><td>P（痛点）</td><td><select id="cl-s3q5-4"><option value="">— 请选择 —</option><option>capable_of</option><option>used_for_eve / used_in_loc</option><option>xIs_a / used_for_aud</option><option>xWant</option><option>Rufus QA 引用层</option></select></td></tr>
+          <tr><td>S②（量化解决方案）</td><td><select id="cl-s3q5-5"><option value="">— 请选择 —</option><option>capable_of</option><option>used_for_eve / used_in_loc</option><option>xIs_a / used_for_aud</option><option>xWant</option><option>Rufus QA 引用层</option></select></td></tr>
+        </tbody>
+      </table>
+      <div class="feedback" id="fb-s3q5"></div>
+    </div>
+    <div class="q-footer">
+      <button class="btn-check" onclick="checkClassify('s3q5')">提交答案</button>
+      <span class="answered-badge" id="done-s3q5">✓ 已作答</span>
+    </div>
+  </div>
+  <!-- Q3-6 -->
+  <div class="q-card" id="card-s3q6">
+    <div class="q-header"><span class="q-num">3-6</span><span class="q-type-badge">单选题</span><div class="q-title">哪种痛点表达更能触发高权重意图节点？</div></div>
+    <div class="q-body">
+      <div class="q-stem">以下两种痛点表达，哪种更能触发 COSMO 高权重意图节点（xWant）？</div>
+      <div class="options" id="opts-s3q6">
+        <label class="option-label"><input type="radio" name="s3q6" value="A"><span class="option-text">A. "需要一个能防盗的包"（功能层痛点）</span></label>
+        <label class="option-label"><input type="radio" name="s3q6" value="B"><span class="option-text">B. "在拥挤机场，总担心背包被扒，手忙脚乱护着包根本没法放松"（情绪/心理层痛点）</span></label>
+      </div>
+      <div class="feedback" id="fb-s3q6"></div>
+    </div>
+    <div class="q-footer">
+      <button class="btn-check" onclick="checkChoice('s3q6')">提交答案</button>
+      <span class="answered-badge" id="done-s3q6">✓ 已作答</span>
+    </div>
+  </div>
+  <!-- Q3-7 -->
+  <div class="q-card" id="card-s3q7">
+    <div class="q-header"><span class="q-num">3-7</span><span class="q-type-badge">多选题</span><div class="q-title">有效 S② 需要满足哪些条件？</div></div>
+    <div class="q-body">
+      <div class="q-stem">以下哪些特征让一段描述成为有效的 S②（量化解决方案）？（多选）</div>
+      <div class="options" id="opts-s3q7">
+        <label class="option-label"><input type="checkbox" name="s3q7" value="A"><span class="option-text">A. 含有数字或可量化范围（如 13"、400g、5,000次）</span></label>
+        <label class="option-label"><input type="checkbox" name="s3q7" value="B"><span class="option-text">B. 用户读到后能立刻验证或想象出来（具体可感知）</span></label>
+        <label class="option-label"><input type="checkbox" name="s3q7" value="C"><span class="option-text">C. 简短到能在 2-6 个词内被 Rufus 直接引用</span></label>
+        <label class="option-label"><input type="checkbox" name="s3q7" value="D"><span class="option-text">D. 使用感叹号或大写字母增强语气</span></label>
+        <label class="option-label"><input type="checkbox" name="s3q7" value="E"><span class="option-text">E. 描述商品的机制/结构，而非泛化形容词</span></label>
+      </div>
+      <div class="feedback" id="fb-s3q7"></div>
+    </div>
+    <div class="q-footer">
+      <button class="btn-check" onclick="checkMulti('s3q7')">提交答案</button>
+      <span class="answered-badge" id="done-s3q7">✓ 已作答</span>
+    </div>
+  </div>
+  <div class="section-score" id="score-s3"></div>
+</section>
+
+<!-- ═══════════════════ 第四期 ═══════════════════ -->
+<section class="section" id="s4">
+  <div class="section-header">
+    <h2>第四期 — 标题与 URL 锁定</h2>
+    <p>核心目标：掌握两段式结构，正确识别 URL 五词根锁定模式</p>
+    <div class="section-progress"><div class="progress-bar"><div class="progress-fill" id="prog-s4" style="width:0%"></div></div><span class="progress-text" id="pt-s4">0 / 7</span></div>
+  </div>
+
+  <!-- Q4-1 -->
+  <div class="q-card" id="card-s4q1">
+    <div class="q-header"><span class="q-num">4-1</span><span class="q-type-badge">单选题</span><div class="q-title">以下哪个标题结构最合理？</div></div>
+    <div class="q-body">
+      <div class="q-stem">品牌 BrandX，产品是防盗斜挎包，核心卖点是隐藏拉链防盗，目标人群是男性商务通勤者，能放 15.6 寸笔记本。以下哪个标题结构最正确？</div>
+      <div class="options" id="opts-s4q1">
+        <label class="option-label"><input type="radio" name="s4q1" value="A"><span class="option-text">A. <code>BrandX Bag - Stylish, Premium, High Quality, Great Value, Functional, Anti-Theft</code></span></label>
+        <label class="option-label"><input type="radio" name="s4q1" value="B"><span class="option-text">B. <code>BrandX Anti-Theft Sling Bag for Men : Fits 15.6" Laptop, TSA Friendly, Travel & Commute Crossbody</code></span></label>
+        <label class="option-label"><input type="radio" name="s4q1" value="C"><span class="option-text">C. <code>BrandX Anti-Theft Sling Bag for Men - Anti-Theft Design, Sling Bag Style, Crossbody for Men</code></span></label>
+        <label class="option-label"><input type="radio" name="s4q1" value="D"><span class="option-text">D. <code>BrandX Sling Bag Anti-Theft 15.6" Laptop TSA Travel Business Commute Men Crossbody Shoulder</code></span></label>
+      </div>
+      <div class="feedback" id="fb-s4q1"></div>
+    </div>
+    <div class="q-footer">
+      <button class="btn-check" onclick="checkChoice('s4q1')">提交答案</button>
+      <span class="answered-badge" id="done-s4q1">✓ 已作答</span>
+    </div>
+  </div>
+
+  <!-- Q4-2 -->
+  <div class="q-card" id="card-s4q2">
+    <div class="q-header"><span class="q-num">4-2</span><span class="q-type-badge">分类题</span><div class="q-title">识别 head query 还是 tail query</div></div>
+    <div class="q-body">
+      <div class="q-stem">查询改写系统把 tail query 改写成 head query（单向，不可逆）。以下词，请判断是 head query 还是 tail query：</div>
+      <table class="classify-table">
+        <thead><tr><th>词组</th><th>类型</th></tr></thead>
+        <tbody>
+          <tr><td><code>sling bag men</code></td><td><select id="cl-s4q2-1"><option value="">— 请选择 —</option><option>head query（标准词，行为数据丰富）</option><option>tail query（长尾词，行为数据稀少）</option></select></td></tr>
+          <tr><td><code>slim shoulder bag for men everyday use</code></td><td><select id="cl-s4q2-2"><option value="">— 请选择 —</option><option>head query（标准词，行为数据丰富）</option><option>tail query（长尾词，行为数据稀少）</option></select></td></tr>
+          <tr><td><code>bag for travel that is anti theft and fits laptop</code></td><td><select id="cl-s4q2-3"><option value="">— 请选择 —</option><option>head query（标准词，行为数据丰富）</option><option>tail query（长尾词，行为数据稀少）</option></select></td></tr>
+          <tr><td><code>anti-theft travel crossbody bag</code></td><td><select id="cl-s4q2-4"><option value="">— 请选择 —</option><option>head query（标准词，行为数据丰富）</option><option>tail query（长尾词，行为数据稀少）</option></select></td></tr>
+        </tbody>
+      </table>
+      <div class="feedback" id="fb-s4q2"></div>
+    </div>
+    <div class="q-footer">
+      <button class="btn-check" onclick="checkClassify('s4q2')">提交答案</button>
+      <span class="answered-badge" id="done-s4q2">✓ 已作答</span>
+    </div>
+  </div>
+
+  <!-- Q4-3 -->
+  <div class="q-card" id="card-s4q3">
+    <div class="q-header"><span class="q-num">4-3</span><span class="q-type-badge">开放题</span><div class="q-title">优化你自己产品的标题</div></div>
+    <div class="q-body">
+      <div class="q-stem">粘贴你当前产品的标题，分析 URL 五词根 + 锁定模式，然后写出改进版：</div>
+      <div class="open-area"><textarea placeholder="【当前标题】粘贴在这里&#10;&#10;【分析】&#10;URL 五词根：&#10;锁定模式（A/B/C）：&#10;S① 在哪段：&#10;S② 在哪段：&#10;最弱的一处：&#10;&#10;【改进版标题】" id="ta-s4q3" style="min-height:200px"></textarea></div>
+      <div class="ref-answer">
+        <button class="ref-answer-toggle" onclick="toggleRef('ref-s4q3',this)">
+          <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+          查看分析框架
+        </button>
+        <div class="ref-content" id="ref-s4q3">
+          <p><strong>分析清单（对照你的标题）：</strong></p>
+          <ul>
+            <li>前5个有效词根里有没有该品类的 head query 词汇？（如 sling bag / crossbody bag）</li>
+            <li>S① 在前段还是后段？——应该在前段（URL 区）</li>
+            <li>S② 有没有数字/机制？（如 Fits 15.6", 400g, TSA Friendly）</li>
+            <li>后段有没有重复前段词根？——重复浪费意图扩展空间</li>
+            <li>场景词 + 人群词是否在后段出现？</li>
+          </ul>
+          <p style="margin-top:8px"><strong>参考格式：</strong><code>品牌 S① 品类 人群 : S② 量化 场景1 & 场景2 同义词</code></p>
+        </div>
+      </div>
+    </div>
+    <div class="q-footer">
+      <button class="btn-check" onclick="markOpen('s4q3')">完成作答</button>
+      <span class="answered-badge" id="done-s4q3">✓ 已作答</span>
+    </div>
+  </div>
+
+  <!-- Q4-4 -->
+  <div class="q-card" id="card-s4q4">
+    <div class="q-header"><span class="q-num">4-4</span><span class="q-type-badge">单选题</span><div class="q-title">URL 五词根机制最准确的描述</div></div>
+    <div class="q-body">
+      <div class="q-stem">Amazon Canonical URL 五词根的机制，以下说法哪个<em>最准确</em>？</div>
+      <div class="options" id="opts-s4q4">
+        <label class="option-label"><input type="radio" name="s4q4" value="A"><span class="option-text">A. 标题里最重要的 5 个关键词，由算法自动识别并选入 URL</span></label>
+        <label class="option-label"><input type="radio" name="s4q4" value="B"><span class="option-text">B. 标题最开头的 5 个有效词根（过滤介词等虚词）直接按序生成 URL slug</span></label>
+        <label class="option-label"><input type="radio" name="s4q4" value="C"><span class="option-text">C. 商品的 5 个主要卖点词，由卖家在后台单独配置</span></label>
+        <label class="option-label"><input type="radio" name="s4q4" value="D"><span class="option-text">D. 平台根据搜索量自动选取 5 个最高频的词生成 URL</span></label>
+      </div>
+      <div class="feedback" id="fb-s4q4"></div>
+    </div>
+    <div class="q-footer">
+      <button class="btn-check" onclick="checkChoice('s4q4')">提交答案</button>
+      <span class="answered-badge" id="done-s4q4">✓ 已作答</span>
+    </div>
+  </div>
+  <!-- Q4-5 -->
+  <div class="q-card" id="card-s4q5">
+    <div class="q-header"><span class="q-num">4-5</span><span class="q-type-badge">单选题</span><div class="q-title">词序规范化适用范围</div></div>
+    <div class="q-body">
+      <div class="q-stem">以下关于 Amazon 标题词序规范化的说法，哪个<em>正确</em>？</div>
+      <div class="options" id="opts-s4q5">
+        <label class="option-label"><input type="radio" name="s4q5" value="A"><span class="option-text">A. 所有词（含品牌词）都做词序规范化，"NIID sling bag" ≡ "sling bag NIID"</span></label>
+        <label class="option-label"><input type="radio" name="s4q5" value="B"><span class="option-text">B. 非品牌词做词序等价处理，品牌词不规范化——品牌词必须精确拼写</span></label>
+        <label class="option-label"><input type="radio" name="s4q5" value="C"><span class="option-text">C. 词序规范化只针对 ST，标题里的词序影响词法匹配</span></label>
+        <label class="option-label"><input type="radio" name="s4q5" value="D"><span class="option-text">D. 词序规范化已被最新系统取消，词序对匹配有影响</span></label>
+      </div>
+      <div class="feedback" id="fb-s4q5"></div>
+    </div>
+    <div class="q-footer">
+      <button class="btn-check" onclick="checkChoice('s4q5')">提交答案</button>
+      <span class="answered-badge" id="done-s4q5">✓ 已作答</span>
+    </div>
+  </div>
+  <!-- Q4-6 -->
+  <div class="q-card" id="card-s4q6">
+    <div class="q-header"><span class="q-num">4-6</span><span class="q-type-badge">分类题</span><div class="q-title">URL 锁定模式判断（A/B/C）</div></div>
+    <div class="q-body">
+      <div class="q-stem">根据三种 URL 锁定模式，请为以下产品选择最合适的模式：</div>
+      <table class="classify-table">
+        <thead><tr><th>项目</th><th>类型（请选择）</th></tr></thead>
+        <tbody>
+          <tr><td>孕妇腹带（Belly Band for Pregnancy）</td><td><select id="cl-s4q6-1"><option value="">— 请选择 —</option><option>模式 A（细分品名不含场景，需补用途/场景）</option><option>模式 B（品名已带一个限定维度）</option><option>模式 C（人群/状态是第一限定条件）</option></select></td></tr>
+          <tr><td>隔热水杯（Insulated Water Bottle，需补用途）</td><td><select id="cl-s4q6-2"><option value="">— 请选择 —</option><option>模式 A（细分品名不含场景，需补用途/场景）</option><option>模式 B（品名已带一个限定维度）</option><option>模式 C（人群/状态是第一限定条件）</option></select></td></tr>
+          <tr><td>男款斜挎包（Sling Bag for Men）</td><td><select id="cl-s4q6-3"><option value="">— 请选择 —</option><option>模式 A（细分品名不含场景，需补用途/场景）</option><option>模式 B（品名已带一个限定维度）</option><option>模式 C（人群/状态是第一限定条件）</option></select></td></tr>
+        </tbody>
+      </table>
+      <div class="feedback" id="fb-s4q6"></div>
+    </div>
+    <div class="q-footer">
+      <button class="btn-check" onclick="checkClassify('s4q6')">提交答案</button>
+      <span class="answered-badge" id="done-s4q6">✓ 已作答</span>
+    </div>
+  </div>
+  <!-- Q4-7 -->
+  <div class="q-card" id="card-s4q7">
+    <div class="q-header"><span class="q-num">4-7</span><span class="q-type-badge">多选题</span><div class="q-title">标题后半段应部署哪些内容？</div></div>
+    <div class="q-body">
+      <div class="q-stem">按两段式结构，前半段锁定 URL 区，后半段为 COSMO/Rufus 扩展区。后半段应优先部署哪些内容？（多选）</div>
+      <div class="options" id="opts-s4q7">
+        <label class="option-label"><input type="checkbox" name="s4q7" value="A"><span class="option-text">A. 量化卖点和数字描述（S②，如 Fits 15.6", 400g）</span></label>
+        <label class="option-label"><input type="checkbox" name="s4q7" value="B"><span class="option-text">B. 重复强调前段已有的核心品类词</span></label>
+        <label class="option-label"><input type="checkbox" name="s4q7" value="C"><span class="option-text">C. 场景词（适用场合/用途）</span></label>
+        <label class="option-label"><input type="checkbox" name="s4q7" value="D"><span class="option-text">D. 人群词</span></label>
+        <label class="option-label"><input type="checkbox" name="s4q7" value="E"><span class="option-text">E. 次要属性和同义品类词</span></label>
+      </div>
+      <div class="feedback" id="fb-s4q7"></div>
+    </div>
+    <div class="q-footer">
+      <button class="btn-check" onclick="checkMulti('s4q7')">提交答案</button>
+      <span class="answered-badge" id="done-s4q7">✓ 已作答</span>
+    </div>
+  </div>
+  <div class="section-score" id="score-s4"></div>
+</section>
+
+<!-- ═══════════════════ 第五期 ═══════════════════ -->
+<section class="section" id="s5">
+  <div class="section-header">
+    <h2>第五期 — 五点文案</h2>
+    <p>核心目标：掌握五点说服顺序，写出可被 Rufus 引用的内容</p>
+    <div class="section-progress"><div class="progress-bar"><div class="progress-fill" id="prog-s5" style="width:0%"></div></div><span class="progress-text" id="pt-s5">0 / 7</span></div>
+  </div>
+
+  <!-- Q5-1 -->
+  <div class="q-card" id="card-s5q1">
+    <div class="q-header"><span class="q-num">5-1</span><span class="q-type-badge">诊断题</span><div class="q-title">这个 Bullet 1 有什么问题？</div></div>
+    <div class="q-body">
+      <div class="q-stem">以下是一个防盗包的 Bullet 1，请找出至少 3 个问题：<br><br><em>"HIGH QUALITY ANTI-THEFT SLING BAG — Premium materials, stylish design, and multiple compartments make this the perfect bag for any occasion. Ideal for travel, work, and everyday use."</em></div>
+      <div class="open-area"><textarea placeholder="问题1：&#10;问题2：&#10;问题3：&#10;&#10;改写后的 Bullet 1：" id="ta-s5q1" style="min-height:160px"></textarea></div>
+      <div class="ref-answer">
+        <button class="ref-answer-toggle" onclick="toggleRef('ref-s5q1',this)">
+          <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+          查看参考答案
+        </button>
+        <div class="ref-content" id="ref-s5q1">
+          <p><strong>问题清单：</strong></p>
+          <ol>
+            <li>「HIGH QUALITY」= HasProperty 写法，DefinedAs 类型，Typicality 最低（47%），COSMO 识别不到有效 capable_of 节点</li>
+            <li>「stylish design」= 无法量化，Rufus 无法引用，不是可引用答案（Rufus 需要"2-6词可验证短语"）</li>
+            <li>「perfect bag for any occasion」= S（场景）为空，P（人群/痛点）为空，COSMO 三要素都没有</li>
+            <li>「Ideal for travel, work, and everyday use」= 三个泛化场景同时出现，系统不知道主场景是什么，意图标签分散</li>
+          </ol>
+          <p style="margin-top:10px"><strong>改写示例：</strong></p>
+          <p>HIDDEN BACK-ACCESS ZIPPER MAKES YOUR VALUABLES PHYSICALLY UNREACHABLE — The main compartment opens only from the body-facing side, making it structurally impossible for pickpockets to access while you're wearing it. Built for airports, crowded subway stations, and tourist markets where you need to move without checking your bag every 30 seconds.</p>
+        </div>
+      </div>
+    </div>
+    <div class="q-footer">
+      <button class="btn-check" onclick="markOpen('s5q1')">完成作答</button>
+      <span class="answered-badge" id="done-s5q1">✓ 已作答</span>
+    </div>
+  </div>
+
+  <!-- Q5-2 -->
+  <div class="q-card" id="card-s5q2">
+    <div class="q-header"><span class="q-num">5-2</span><span class="q-type-badge">单选题</span><div class="q-title">哪个 Bullet 2 正确覆盖了三要素？</div></div>
+    <div class="q-body">
+      <div class="q-stem">Bullet 2 必须同框覆盖：<em>场景（具体地点/活动）+ 人群（明确描述）+ 痛点（用户的感受）</em>。以下哪个版本做到了？</div>
+      <div class="options" id="opts-s5q2">
+        <label class="option-label"><input type="radio" name="s5q2" value="A"><span class="option-text">A. FOR TRAVELERS AND COMMUTERS — Great for daily use, this bag fits all your essentials. The organized compartments make it easy to find your items quickly.</span></label>
+        <label class="option-label"><input type="radio" name="s5q2" value="B"><span class="option-text">B. BUILT FOR BUSINESS TRAVELERS NAVIGATING AIRPORTS AND TOURIST CROWDS — External zipper faces your body, not the crowd. No more clutching your bag or glancing back every time someone brushes past.</span></label>
+        <label class="option-label"><input type="radio" name="s5q2" value="C"><span class="option-text">C. PERFECT FOR TRAVEL — Anti-theft design keeps your valuables safe. Multiple pockets for organization.</span></label>
+      </div>
+      <div class="feedback" id="fb-s5q2"></div>
+    </div>
+    <div class="q-footer">
+      <button class="btn-check" onclick="checkChoice('s5q2')">提交答案</button>
+      <span class="answered-badge" id="done-s5q2">✓ 已作答</span>
+    </div>
+  </div>
+
+  <!-- Q5-3 -->
+  <div class="q-card" id="card-s5q3">
+    <div class="q-header"><span class="q-num">5-3</span><span class="q-type-badge">开放题</span><div class="q-title">为你的产品写一个满足三要素的 Bullet 2</div></div>
+    <div class="q-body">
+      <div class="q-stem">参照你在第三期完成的 SSPPS 建模，写出满足「场景 + 人群 + 痛点」三要素的 Bullet 2 草稿，并完成自检：</div>
+      <div class="open-area"><textarea placeholder="Bullet 2 草稿：&#10;&#10;自检：&#10;场景是具体地点/活动（非"日常"/"户外"）？是/否&#10;人群能让目标用户说"这说的就是我"？是/否&#10;痛点写的是用户感受/状态，而非只是"需要某功能"？是/否" id="ta-s5q3" style="min-height:160px"></textarea></div>
+      <div class="ref-answer">
+        <button class="ref-answer-toggle" onclick="toggleRef('ref-s5q3',this)">
+          <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+          查看参考结构
+        </button>
+        <div class="ref-content" id="ref-s5q3">
+          <p><strong>结构公式：</strong><code>[人群] navigating/moving through [具体场景] — [商品如何应对] [痛点情绪解除]</code></p>
+          <p style="margin-top:8px"><strong>示例：</strong>BUILT FOR BUSINESS TRAVELERS NAVIGATING AIRPORTS AND TOURIST CROWDS — External zipper faces your body, not the crowd. No more clutching your bag or glancing back every time someone brushes past.</p>
+          <p style="margin-top:8px"><strong>COSMO 节点检查：</strong></p>
+          <ul>
+            <li>场景词 → 触发 <code>used_for_eve</code> 和 <code>used_in_loc</code></li>
+            <li>人群词 → 触发 <code>xIs_a</code> 和 <code>used_for_aud</code></li>
+            <li>痛点情绪 → 触发 <code>xWant</code>（权重最高的用户主语关系）</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+    <div class="q-footer">
+      <button class="btn-check" onclick="markOpen('s5q3')">完成作答</button>
+      <span class="answered-badge" id="done-s5q3">✓ 已作答</span>
+    </div>
+  </div>
+
+  <!-- Q5-4 -->
+  <div class="q-card" id="card-s5q4">
+    <div class="q-header"><span class="q-num">5-4</span><span class="q-type-badge">单选题</span><div class="q-title">哪条 Bullet 最适合部署礼品场景词？</div></div>
+    <div class="q-body">
+      <div class="q-stem">按五点功能分工，礼品场景词（gift for traveler, birthday gift for him）最适合放在哪条 Bullet？</div>
+      <div class="options" id="opts-s5q4">
+        <label class="option-label"><input type="radio" name="s5q4" value="A"><span class="option-text">A. Bullet 1（定义 S①/核心能力）</span></label>
+        <label class="option-label"><input type="radio" name="s5q4" value="B"><span class="option-text">B. Bullet 3（差异化/竞品对比）</span></label>
+        <label class="option-label"><input type="radio" name="s5q4" value="C"><span class="option-text">C. Bullet 4（量化 S②/具体参数）</span></label>
+        <label class="option-label"><input type="radio" name="s5q4" value="D"><span class="option-text">D. Bullet 5（扩展场景/礼品词/多人群）</span></label>
+      </div>
+      <div class="feedback" id="fb-s5q4"></div>
+    </div>
+    <div class="q-footer">
+      <button class="btn-check" onclick="checkChoice('s5q4')">提交答案</button>
+      <span class="answered-badge" id="done-s5q4">✓ 已作答</span>
+    </div>
+  </div>
+  <!-- Q5-5 -->
+  <div class="q-card" id="card-s5q5">
+    <div class="q-header"><span class="q-num">5-5</span><span class="q-type-badge">分类题</span><div class="q-title">Bullet 1-5 功能分工</div></div>
+    <div class="q-body">
+      <div class="q-stem">请将以下内容类型与对应的 Bullet 位置匹配：</div>
+      <table class="classify-table">
+        <thead><tr><th>项目</th><th>分类（请选择）</th></tr></thead>
+        <tbody>
+          <tr><td>隐藏拉链结构机制（S① 核心能力描述）</td><td><select id="cl-s5q5-1"><option value="">— 请选择 —</option><option>Bullet 1</option><option>Bullet 2</option><option>Bullet 3</option><option>Bullet 4</option><option>Bullet 5</option></select></td></tr>
+          <tr><td>机场候机厅场景 + 商务差旅男性 + 护包焦虑</td><td><select id="cl-s5q5-2"><option value="">— 请选择 —</option><option>Bullet 1</option><option>Bullet 2</option><option>Bullet 3</option><option>Bullet 4</option><option>Bullet 5</option></select></td></tr>
+          <tr><td>比同类产品更轻薄（行业通病 vs 我们的解法）</td><td><select id="cl-s5q5-3"><option value="">— 请选择 —</option><option>Bullet 1</option><option>Bullet 2</option><option>Bullet 3</option><option>Bullet 4</option><option>Bullet 5</option></select></td></tr>
+          <tr><td>400g，Fits 13" Laptop，YKK 拉链耐用数据</td><td><select id="cl-s5q5-4"><option value="">— 请选择 —</option><option>Bullet 1</option><option>Bullet 2</option><option>Bullet 3</option><option>Bullet 4</option><option>Bullet 5</option></select></td></tr>
+          <tr><td>gift for frequent flyer, photography bag, hiking day bag</td><td><select id="cl-s5q5-5"><option value="">— 请选择 —</option><option>Bullet 1</option><option>Bullet 2</option><option>Bullet 3</option><option>Bullet 4</option><option>Bullet 5</option></select></td></tr>
+        </tbody>
+      </table>
+      <div class="feedback" id="fb-s5q5"></div>
+    </div>
+    <div class="q-footer">
+      <button class="btn-check" onclick="checkClassify('s5q5')">提交答案</button>
+      <span class="answered-badge" id="done-s5q5">✓ 已作答</span>
+    </div>
+  </div>
+  <!-- Q5-6 -->
+  <div class="q-card" id="card-s5q6">
+    <div class="q-header"><span class="q-num">5-6</span><span class="q-type-badge">单选题</span><div class="q-title">co-click 协同信号是什么？</div></div>
+    <div class="q-body">
+      <div class="q-stem">"co-click 协同信号"的含义是什么？</div>
+      <div class="options" id="opts-s5q6">
+        <label class="option-label"><input type="radio" name="s5q6" value="A"><span class="option-text">A. 多个用户同时点击同一商品，形成群体共鸣信号</span></label>
+        <label class="option-label"><input type="radio" name="s5q6" value="B"><span class="option-text">B. 同一商品既可通过 Q&amp;A（Rufus 问答）访问，又可通过搜索访问，两条路径形成更强的训练信号</span></label>
+        <label class="option-label"><input type="radio" name="s5q6" value="C"><span class="option-text">C. 广告点击和自然搜索点击叠加，系统权重翻倍</span></label>
+        <label class="option-label"><input type="radio" name="s5q6" value="D"><span class="option-text">D. 用户点击一个商品后，系统把相似商品也收集为训练数据</span></label>
+      </div>
+      <div class="feedback" id="fb-s5q6"></div>
+    </div>
+    <div class="q-footer">
+      <button class="btn-check" onclick="checkChoice('s5q6')">提交答案</button>
+      <span class="answered-badge" id="done-s5q6">✓ 已作答</span>
+    </div>
+  </div>
+  <!-- Q5-7 -->
+  <div class="q-card" id="card-s5q7">
+    <div class="q-header"><span class="q-num">5-7</span><span class="q-type-badge">多选题</span><div class="q-title">Rufus 倾向于引用的内容特征</div></div>
+    <div class="q-body">
+      <div class="q-stem">Rufus 引用 Listing 内容时，被引用的内容通常具备哪些特征？（多选）</div>
+      <div class="options" id="opts-s5q7">
+        <label class="option-label"><input type="checkbox" name="s5q7" value="A"><span class="option-text">A. 2-6 个词以内的短语，可直接作为问题的答案</span></label>
+        <label class="option-label"><input type="checkbox" name="s5q7" value="B"><span class="option-text">B. 含有具体数字、型号、规格（可量化、可验证）</span></label>
+        <label class="option-label"><input type="checkbox" name="s5q7" value="C"><span class="option-text">C. 描述商品的核心能力或机制（而非形容词堆砌）</span></label>
+        <label class="option-label"><input type="checkbox" name="s5q7" value="D"><span class="option-text">D. 使用感叹号和情绪化语言增强可信度</span></label>
+        <label class="option-label"><input type="checkbox" name="s5q7" value="E"><span class="option-text">E. 具体到让用户能立刻想象出使用场景</span></label>
+      </div>
+      <div class="feedback" id="fb-s5q7"></div>
+    </div>
+    <div class="q-footer">
+      <button class="btn-check" onclick="checkMulti('s5q7')">提交答案</button>
+      <span class="answered-badge" id="done-s5q7">✓ 已作答</span>
+    </div>
+  </div>
+  <div class="section-score" id="score-s5"></div>
+</section>
+
+<!-- ═══════════════════ 第六期 ═══════════════════ -->
+<section class="section" id="s6">
+  <div class="section-header">
+    <h2>第六期 — 视觉与 Search Terms</h2>
+    <p>核心目标：诊断图文矛盾；按宽窄策略写 ST</p>
+    <div class="section-progress"><div class="progress-bar"><div class="progress-fill" id="prog-s6" style="width:0%"></div></div><span class="progress-text" id="pt-s6">0 / 7</span></div>
+  </div>
+
+  <!-- Q6-1 -->
+  <div class="q-card" id="card-s6q1">
+    <div class="q-header"><span class="q-num">6-1</span><span class="q-type-badge">单选题</span><div class="q-title">哪种视觉错误危害最大？</div></div>
+    <div class="q-body">
+      <div class="q-stem">以下四种视觉问题，哪种对 Listing 的<em>长期语义匹配权重</em>危害最大？（提示：涉及"曝光但不点击"的负向信号机制）</div>
+      <div class="options" id="opts-s6q1">
+        <label class="option-label"><input type="radio" name="s6q1" value="A"><span class="option-text">A. 场景图是摆拍棚照，而不是真实使用环境</span></label>
+        <label class="option-label"><input type="radio" name="s6q1" value="B"><span class="option-text">B. 主图只展示外观，没有体现 S① 核心卖点，导致特定意图词下 CTR 持续低</span></label>
+        <label class="option-label"><input type="radio" name="s6q1" value="C"><span class="option-text">C. 标题写 for men，但图 4 人物图里都是女模特</span></label>
+        <label class="option-label"><input type="radio" name="s6q1" value="D"><span class="option-text">D. 视频只是把 6 张静态图片串起来，没有叙事</span></label>
+      </div>
+      <div class="feedback" id="fb-s6q1"></div>
+    </div>
+    <div class="q-footer">
+      <button class="btn-check" onclick="checkChoice('s6q1')">提交答案</button>
+      <span class="answered-badge" id="done-s6q1">✓ 已作答</span>
+    </div>
+  </div>
+
+  <!-- Q6-2 -->
+  <div class="q-card" id="card-s6q2">
+    <div class="q-header"><span class="q-num">6-2</span><span class="q-type-badge">单选题</span><div class="q-title">哪个 ST 第 1 行策略更正确？</div></div>
+    <div class="q-body">
+      <div class="q-stem">产品是防盗斜挎包（S① 防扒 + RFID）。对比以下两个 ST 第 1 行写法，哪个符合「宽词根 + S② 结果词」策略？</div>
+      <div class="options" id="opts-s6q2">
+        <label class="option-label"><input type="radio" name="s6q2" value="A"><span class="option-text">A. <code>anti-theft sling bag for business men traveling internationally for commute work</code></span></label>
+        <label class="option-label"><input type="radio" name="s6q2" value="B"><span class="option-text">B. <code>anti theft bag sling bag crossbody bag pickpocket proof bag rfid blocking bag fits 13 inch laptop secure bag</code></span></label>
+      </div>
+      <div class="feedback" id="fb-s6q2"></div>
+    </div>
+    <div class="q-footer">
+      <button class="btn-check" onclick="checkChoice('s6q2')">提交答案</button>
+      <span class="answered-badge" id="done-s6q2">✓ 已作答</span>
+    </div>
+  </div>
+
+  <!-- Q6-3 -->
+  <div class="q-card" id="card-s6q3">
+    <div class="q-header"><span class="q-num">6-3</span><span class="q-type-badge">开放题</span><div class="q-title">诊断你自己产品的 ST</div></div>
+    <div class="q-body">
+      <div class="q-stem">把你当前产品的 Search Terms 粘贴进来，用五行模型做一次完整诊断：</div>
+      <div class="open-area"><textarea placeholder="【当前 ST】粘贴在这里&#10;&#10;【诊断】&#10;第1行是否含宽词根（品类核心词）？&#10;第1行是否含 S② 结果词（离加购最近）？&#10;第3行是否含隐式属性词（感知类）？&#10;是否有重复标题已有的词根？&#10;最需要加的一类词是什么？&#10;&#10;【优化后的第1行】" id="ta-s6q3" style="min-height:200px"></textarea></div>
+      <div class="ref-answer">
+        <button class="ref-answer-toggle" onclick="toggleRef('ref-s6q3',this)">
+          <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+          查看诊断框架
+        </button>
+        <div class="ref-content" id="ref-s6q3">
+          <p><strong>ST 五行诊断快查：</strong></p>
+          <table>
+            <tr><th>行</th><th>应该有什么</th><th>常见问题</th></tr>
+            <tr><td>第1行</td><td>宽词根（品类核心词）+ S② 结果词</td><td>全是精确长短语，RL 改写覆盖少</td></tr>
+            <tr><td>第2行</td><td>场景变体 + 人群变体</td><td>场景词泛化（用 "travel" 不用 "airport"）</td></tr>
+            <tr><td>第3行</td><td>属性词 + 隐式属性词（感知类）</td><td>只有功能词，没有感知词（低调、轻量、商务感）</td></tr>
+            <tr><td>第4行</td><td>Rufus 问题词 + 痛点词</td><td>常被遗漏，导致 QA Widget 无法关联</td></tr>
+            <tr><td>第5行</td><td>次级场景 + 礼品词</td><td>礼品词经常被忽略（gift for traveler 等）</td></tr>
+          </table>
+          <p style="margin-top:8px"><strong>后台属性提醒：</strong>ST 第3行的属性词要和后台 Product Type / Item Type 字段的填写保持一致，才能进入 Filter 候选池。</p>
+        </div>
+      </div>
+    </div>
+    <div class="q-footer">
+      <button class="btn-check" onclick="markOpen('s6q3')">完成作答</button>
+      <span class="answered-badge" id="done-s6q3">✓ 已作答</span>
+    </div>
+  </div>
+
+  <!-- Q6-4 -->
+  <div class="q-card" id="card-s6q4">
+    <div class="q-header"><span class="q-num">6-4</span><span class="q-type-badge">单选题</span><div class="q-title">宽泛词"bag"在 FABRIC 系统里如何处理？</div></div>
+    <div class="q-body">
+      <div class="q-stem">用户搜索宽泛词 <code>bag</code>，FABRIC 多标签分类系统如何处理这个查询？</div>
+      <div class="options" id="opts-s6q4">
+        <label class="option-label"><input type="radio" name="s6q4" value="A"><span class="option-text">A. 把 "bag" 视为无意义词，不处理，直接进入词法匹配</span></label>
+        <label class="option-label"><input type="radio" name="s6q4" value="B"><span class="option-text">B. 把 "bag" 标记为高频词，给它最高的展示优先级</span></label>
+        <label class="option-label"><input type="radio" name="s6q4" value="C"><span class="option-text">C. 把 "bag" 拆解成多个品类标签（sling bag, tote bag, backpack 等），各品类下分别参与拍卖和匹配</span></label>
+        <label class="option-label"><input type="radio" name="s6q4" value="D"><span class="option-text">D. 把 "bag" 改写成 "handbag"，选定一个最接近的品类</span></label>
+      </div>
+      <div class="feedback" id="fb-s6q4"></div>
+    </div>
+    <div class="q-footer">
+      <button class="btn-check" onclick="checkChoice('s6q4')">提交答案</button>
+      <span class="answered-badge" id="done-s6q4">✓ 已作答</span>
+    </div>
+  </div>
+  <!-- Q6-5 -->
+  <div class="q-card" id="card-s6q5">
+    <div class="q-header"><span class="q-num">6-5</span><span class="q-type-badge">分类题</span><div class="q-title">ST 五行内容归类</div></div>
+    <div class="q-body">
+      <div class="q-stem">请将以下词组分配到对应的 ST 行：</div>
+      <table class="classify-table">
+        <thead><tr><th>项目</th><th>分类（请选择）</th></tr></thead>
+        <tbody>
+          <tr><td><code>anti theft bag, sling bag, crossbody bag</code></td><td><select id="cl-s6q5-1"><option value="">— 请选择 —</option><option>第1行（宽词根 + S② 结果词）</option><option>第2行（场景 + 人群变体）</option><option>第3行（属性词 + 隐式属性词）</option><option>第4行（Rufus 问题词 + 痛点词）</option><option>第5行（外围长尾 + 礼品词）</option></select></td></tr>
+          <tr><td><code>airport bag, commuter bag men, frequent flyer bag</code></td><td><select id="cl-s6q5-2"><option value="">— 请选择 —</option><option>第1行（宽词根 + S② 结果词）</option><option>第2行（场景 + 人群变体）</option><option>第3行（属性词 + 隐式属性词）</option><option>第4行（Rufus 问题词 + 痛点词）</option><option>第5行（外围长尾 + 礼品词）</option></select></td></tr>
+          <tr><td><code>slim sling bag, low profile bag, nylon sling bag</code></td><td><select id="cl-s6q5-3"><option value="">— 请选择 —</option><option>第1行（宽词根 + S② 结果词）</option><option>第2行（场景 + 人群变体）</option><option>第3行（属性词 + 隐式属性词）</option><option>第4行（Rufus 问题词 + 痛点词）</option><option>第5行（外围长尾 + 礼品词）</option></select></td></tr>
+          <tr><td><code>worry free travel bag, bag won't open from outside</code></td><td><select id="cl-s6q5-4"><option value="">— 请选择 —</option><option>第1行（宽词根 + S② 结果词）</option><option>第2行（场景 + 人群变体）</option><option>第3行（属性词 + 隐式属性词）</option><option>第4行（Rufus 问题词 + 痛点词）</option><option>第5行（外围长尾 + 礼品词）</option></select></td></tr>
+          <tr><td><code>gift for traveler, photography bag, niid bag</code></td><td><select id="cl-s6q5-5"><option value="">— 请选择 —</option><option>第1行（宽词根 + S② 结果词）</option><option>第2行（场景 + 人群变体）</option><option>第3行（属性词 + 隐式属性词）</option><option>第4行（Rufus 问题词 + 痛点词）</option><option>第5行（外围长尾 + 礼品词）</option></select></td></tr>
+        </tbody>
+      </table>
+      <div class="feedback" id="fb-s6q5"></div>
+    </div>
+    <div class="q-footer">
+      <button class="btn-check" onclick="checkClassify('s6q5')">提交答案</button>
+      <span class="answered-badge" id="done-s6q5">✓ 已作答</span>
+    </div>
+  </div>
+  <!-- Q6-6 -->
+  <div class="q-card" id="card-s6q6">
+    <div class="q-header"><span class="q-num">6-6</span><span class="q-type-badge">单选题</span><div class="q-title">图文意图矛盾的后果</div></div>
+    <div class="q-body">
+      <div class="q-stem">标题写 <code>Anti-Theft Sling Bag for Business Travel</code>，但所有场景图都是休闲户外/徒步场景，没有一张商务/机场图。会造成什么后果？</div>
+      <div class="options" id="opts-s6q6">
+        <label class="option-label"><input type="radio" name="s6q6" value="A"><span class="option-text">A. 不影响系统，COSMO 只识别文字，不识别图片</span></label>
+        <label class="option-label"><input type="radio" name="s6q6" value="B"><span class="option-text">B. COSMO 视觉识别与文字识别的意图标签冲突：文字触发 business travel，视觉触发 outdoor，商品意图定位变得模糊</span></label>
+        <label class="option-label"><input type="radio" name="s6q6" value="C"><span class="option-text">C. 只影响人工审核，不影响算法排名</span></label>
+        <label class="option-label"><input type="radio" name="s6q6" value="D"><span class="option-text">D. 影响 A+ 展示效果，但不影响搜索匹配</span></label>
+      </div>
+      <div class="feedback" id="fb-s6q6"></div>
+    </div>
+    <div class="q-footer">
+      <button class="btn-check" onclick="checkChoice('s6q6')">提交答案</button>
+      <span class="answered-badge" id="done-s6q6">✓ 已作答</span>
+    </div>
+  </div>
+  <!-- Q6-7 -->
+  <div class="q-card" id="card-s6q7">
+    <div class="q-header"><span class="q-num">6-7</span><span class="q-type-badge">多选题</span><div class="q-title">ST 第 3 行应包含哪类词？</div></div>
+    <div class="q-body">
+      <div class="q-stem">ST 第 3 行的策略是"属性词 + 隐式属性词"。以下哪些适合放在第 3 行？（多选）</div>
+      <div class="options" id="opts-s6q7">
+        <label class="option-label"><input type="checkbox" name="s6q7" value="A"><span class="option-text">A. <code>lightweight sling bag</code>（轻量 — 感知类隐式属性）</span></label>
+        <label class="option-label"><input type="checkbox" name="s6q7" value="B"><span class="option-text">B. <code>sling bag men</code>（人群变体 — 应在第 2 行）</span></label>
+        <label class="option-label"><input type="checkbox" name="s6q7" value="C"><span class="option-text">C. <code>low profile bag</code>（低调外观 — 感知类隐式属性）</span></label>
+        <label class="option-label"><input type="checkbox" name="s6q7" value="D"><span class="option-text">D. <code>nylon sling bag</code>（材质属性）</span></label>
+        <label class="option-label"><input type="checkbox" name="s6q7" value="E"><span class="option-text">E. <code>worry free travel bag</code>（焦虑解除词 — 应在第 4 行）</span></label>
+        <label class="option-label"><input type="checkbox" name="s6q7" value="F"><span class="option-text">F. <code>slim crossbody bag</code>（轻薄 — 感知类隐式属性）</span></label>
+      </div>
+      <div class="feedback" id="fb-s6q7"></div>
+    </div>
+    <div class="q-footer">
+      <button class="btn-check" onclick="checkMulti('s6q7')">提交答案</button>
+      <span class="answered-badge" id="done-s6q7">✓ 已作答</span>
+    </div>
+  </div>
+  <div class="section-score" id="score-s6"></div>
+</section>
+
+<!-- ═══════════════════ 第七期 ═══════════════════ -->
+<section class="section" id="s7">
+  <div class="section-header">
+    <h2>第七期 — 四位一体验证</h2>
+    <p>核心目标：根据数据症状定位问题层，知道下一步修什么</p>
+    <div class="section-progress"><div class="progress-bar"><div class="progress-fill" id="prog-s7" style="width:0%"></div></div><span class="progress-text" id="pt-s7">0 / 7</span></div>
+  </div>
+
+  <!-- Q7-1 -->
+  <div class="q-card" id="card-s7q1">
+    <div class="q-header"><span class="q-num">7-1</span><span class="q-type-badge">分类题</span><div class="q-title">数据症状 → 问题层诊断</div></div>
+    <div class="q-body">
+      <div class="q-stem">按四位一体框架，把以下数据症状对应到正确的问题层：</div>
+      <table class="classify-table">
+        <thead><tr><th>数据症状</th><th>问题层</th></tr></thead>
+        <tbody>
+          <tr><td>广告展示量很低</td><td><select id="cl-s7q1-1"><option value="">— 请选择 —</option><option>意图信号问题（标题/ST 方向偏了）</option><option>视觉吸引力问题（主图/标题后段）</option><option>内容说服力问题（Bullet 量化/信任不足）</option><option>词精准度问题（词引来的不是目标用户）</option><option>一比竞争问题（竞品整体更强）</option></select></td></tr>
+          <tr><td>展示量正常，但 CTR 很低</td><td><select id="cl-s7q1-2"><option value="">— 请选择 —</option><option>意图信号问题（标题/ST 方向偏了）</option><option>视觉吸引力问题（主图/标题后段）</option><option>内容说服力问题（Bullet 量化/信任不足）</option><option>词精准度问题（词引来的不是目标用户）</option><option>一比竞争问题（竞品整体更强）</option></select></td></tr>
+          <tr><td>CTR 正常，但购买转化率低</td><td><select id="cl-s7q1-3"><option value="">— 请选择 —</option><option>意图信号问题（标题/ST 方向偏了）</option><option>视觉吸引力问题（主图/标题后段）</option><option>内容说服力问题（Bullet 量化/信任不足）</option><option>词精准度问题（词引来的不是目标用户）</option><option>一比竞争问题（竞品整体更强）</option></select></td></tr>
+          <tr><td>CVR 不错，但 ACOS 很高</td><td><select id="cl-s7q1-4"><option value="">— 请选择 —</option><option>意图信号问题（标题/ST 方向偏了）</option><option>视觉吸引力问题（主图/标题后段）</option><option>内容说服力问题（Bullet 量化/信任不足）</option><option>词精准度问题（词引来的不是目标用户）</option><option>一比竞争问题（竞品整体更强）</option></select></td></tr>
+          <tr><td>四个指标都正常，销量不增长</td><td><select id="cl-s7q1-5"><option value="">— 请选择 —</option><option>意图信号问题（标题/ST 方向偏了）</option><option>视觉吸引力问题（主图/标题后段）</option><option>内容说服力问题（Bullet 量化/信任不足）</option><option>词精准度问题（词引来的不是目标用户）</option><option>一比竞争问题（竞品整体更强）</option></select></td></tr>
+        </tbody>
+      </table>
+      <div class="feedback" id="fb-s7q1"></div>
+    </div>
+    <div class="q-footer">
+      <button class="btn-check" onclick="checkClassify('s7q1')">提交答案</button>
+      <span class="answered-badge" id="done-s7q1">✓ 已作答</span>
+    </div>
+  </div>
+
+  <!-- Q7-2 -->
+  <div class="q-card" id="card-s7q2">
+    <div class="q-header"><span class="q-num">7-2</span><span class="q-type-badge">单选题</span><div class="q-title">优化 Listing 后需要等多久看稳定效果？</div></div>
+    <div class="q-body">
+      <div class="q-stem">你刚刚完成了 Listing 优化（标题+五点全部更新），广告也按目标词重新部署了。正常情况下，自然搜索信号稳定变化需要多长时间才能体现？</div>
+      <div class="options" id="opts-s7q2">
+        <label class="option-label"><input type="radio" name="s7q2" value="A"><span class="option-text">A. 2-3 天，亚马逊系统更新很快</span></label>
+        <label class="option-label"><input type="radio" name="s7q2" value="B"><span class="option-text">B. 1 周左右</span></label>
+        <label class="option-label"><input type="radio" name="s7q2" value="C"><span class="option-text">C. 2-4 周，系统需要积累足够的行为信号才能稳定更新意图标签权重</span></label>
+        <label class="option-label"><input type="radio" name="s7q2" value="D"><span class="option-text">D. 2-3 个月，自然排名变化本来就慢</span></label>
+      </div>
+      <div class="feedback" id="fb-s7q2"></div>
+    </div>
+    <div class="q-footer">
+      <button class="btn-check" onclick="checkChoice('s7q2')">提交答案</button>
+      <span class="answered-badge" id="done-s7q2">✓ 已作答</span>
+    </div>
+  </div>
+
+  <!-- Q7-3 -->
+  <div class="q-card" id="card-s7q3">
+    <div class="q-header"><span class="q-num">7-3</span><span class="q-type-badge">综合诊断题</span><div class="q-title">数据异常综合诊断</div></div>
+    <div class="q-body">
+      <div class="q-stem">
+        <strong>场景：</strong>防盗斜挎包，上线 3 个月，广告投 <code>anti-theft sling bag</code>：<br>
+        • 广告展示量：正常（每天 5,000+ 次）<br>
+        • CTR：0.8%（同类词平均 1.5%）<br>
+        • CVR：3%（同类平均 4%）<br>
+        • 五星好评高频词：「好看」「轻」；有用户说「防盗功能没感觉到」<br>
+        • 竞品：头部竞品最近换了新主图，加入了防盗机制特写<br><br>
+        请回答：① 问题主要在哪个层？② 最紧急的一件事？③ 评论信号说明了什么 SSPPS 问题？
+      </div>
+      <div class="open-area"><textarea placeholder="① 问题层：&#10;② 最紧急的一件事：&#10;③ 评论信号的 SSPPS 问题：" id="ta-s7q3" style="min-height:140px"></textarea></div>
+      <div class="ref-answer">
+        <button class="ref-answer-toggle" onclick="toggleRef('ref-s7q3',this)">
+          <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+          查看参考答案
+        </button>
+        <div class="ref-content" id="ref-s7q3">
+          <p><strong>① 问题层：</strong>主要是视觉吸引力（CTR 0.8% vs 均值 1.5%，差距显著）；次要是内容说服力（CVR 也略低，且评论反馈说明防盗信号传递不足）。</p>
+          <p style="margin-top:8px"><strong>② 最紧急：</strong>升级主图，加入防盗机制的视觉提示（不只展示包的外观），同时参考竞品新主图做 A/B 测试。图 2 改为防盗机制特写（拉链位置、背面结构）。</p>
+          <p style="margin-top:8px"><strong>③ SSPPS 问题：</strong>评论里"好看"和"轻"被频繁提及，用户记住的是外观和重量，没有记住 S①（防盗）。这说明 Listing 的 S① 信号强度不够——用户买的理由和你设计的主打卖点不一致。这是危险信号：当用户发现"防盗功能没感觉到"，差评风险上升，且系统会根据评论内容调整意图标签权重，让 capable_of: prevent theft 节点越来越弱。修复方向：重写 Bullet 1（机制更具体）、图 2（防盗特写）、让用户实际感知到防盗的存在。</p>
+        </div>
+      </div>
+    </div>
+    <div class="q-footer">
+      <button class="btn-check" onclick="markOpen('s7q3')">完成作答</button>
+      <span class="answered-badge" id="done-s7q3">✓ 已作答</span>
+    </div>
+  </div>
+
+  <!-- Q7-4 -->
+  <div class="q-card" id="card-s7q4">
+    <div class="q-header"><span class="q-num">7-4</span><span class="q-type-badge">单选题</span><div class="q-title">用户行为权重排序</div></div>
+    <div class="q-body">
+      <div class="q-stem">以下用户行为，系统赋予的信号权重从高到低排序<em>正确</em>的是？</div>
+      <div class="options" id="opts-s7q4">
+        <label class="option-label"><input type="radio" name="s7q4" value="A"><span class="option-text">A. 购买（4.51）> 加购（6.86）> 点击（1.05）</span></label>
+        <label class="option-label"><input type="radio" name="s7q4" value="B"><span class="option-text">B. 加购（6.86）> 购买（4.51）> 点击（1.05）</span></label>
+        <label class="option-label"><input type="radio" name="s7q4" value="C"><span class="option-text">C. 点击（1.05）> 加购（6.86）> 购买（4.51）</span></label>
+        <label class="option-label"><input type="radio" name="s7q4" value="D"><span class="option-text">D. 三种行为权重相同，均为 1.0</span></label>
+      </div>
+      <div class="feedback" id="fb-s7q4"></div>
+    </div>
+    <div class="q-footer">
+      <button class="btn-check" onclick="checkChoice('s7q4')">提交答案</button>
+      <span class="answered-badge" id="done-s7q4">✓ 已作答</span>
+    </div>
+  </div>
+  <!-- Q7-5 -->
+  <div class="q-card" id="card-s7q5">
+    <div class="q-header"><span class="q-num">7-5</span><span class="q-type-badge">单选题</span><div class="q-title">Session-aware Filter 排名机制</div></div>
+    <div class="q-body">
+      <div class="q-stem">Session-aware Filter 排名系统的核心机制是什么？</div>
+      <div class="options" id="opts-s7q5">
+        <label class="option-label"><input type="radio" name="s7q5" value="A"><span class="option-text">A. Filter 选项按搜索量排序，高频词排在前面</span></label>
+        <label class="option-label"><input type="radio" name="s7q5" value="B"><span class="option-text">B. 用户本次会话中之前使用过的 Filter 条件，会影响当前搜索的 Filter 排序优先级</span></label>
+        <label class="option-label"><input type="radio" name="s7q5" value="C"><span class="option-text">C. Filter 排序由卖家竞价决定，高竞价属性排在前面</span></label>
+        <label class="option-label"><input type="radio" name="s7q5" value="D"><span class="option-text">D. Filter 排序完全随机，避免用户固化浏览模式</span></label>
+      </div>
+      <div class="feedback" id="fb-s7q5"></div>
+    </div>
+    <div class="q-footer">
+      <button class="btn-check" onclick="checkChoice('s7q5')">提交答案</button>
+      <span class="answered-badge" id="done-s7q5">✓ 已作答</span>
+    </div>
+  </div>
+  <!-- Q7-6 -->
+  <div class="q-card" id="card-s7q6">
+    <div class="q-header"><span class="q-num">7-6</span><span class="q-type-badge">分类题</span><div class="q-title">优化问题优先级判断</div></div>
+    <div class="q-body">
+      <div class="q-stem">以下 Listing 问题，请判断修复优先级（P0 影响最大立即修，P3 可选）：</div>
+      <table class="classify-table">
+        <thead><tr><th>数据症状 / 问题</th><th>优先级（请选择）</th></tr></thead>
+        <tbody>
+          <tr><td>主图没有体现 S①，特定词下 CTR 持续低</td><td><select id="cl-s7q6-1"><option value="">— 请选择 —</option><option>P0（立即修）</option><option>P1（本周）</option><option>P2（下次迭代）</option><option>P3（可选）</option></select></td></tr>
+          <tr><td>标题后半段有一个词和前半段重复了</td><td><select id="cl-s7q6-2"><option value="">— 请选择 —</option><option>P0（立即修）</option><option>P1（本周）</option><option>P2（下次迭代）</option><option>P3（可选）</option></select></td></tr>
+          <tr><td>ST 第 5 行礼品词没有填</td><td><select id="cl-s7q6-3"><option value="">— 请选择 —</option><option>P0（立即修）</option><option>P1（本周）</option><option>P2（下次迭代）</option><option>P3（可选）</option></select></td></tr>
+          <tr><td>Product Type 填错，Filter 候选池定位偏移</td><td><select id="cl-s7q6-4"><option value="">— 请选择 —</option><option>P0（立即修）</option><option>P1（本周）</option><option>P2（下次迭代）</option><option>P3（可选）</option></select></td></tr>
+          <tr><td>Bullet 2 缺少痛点表达，只有场景和人群</td><td><select id="cl-s7q6-5"><option value="">— 请选择 —</option><option>P0（立即修）</option><option>P1（本周）</option><option>P2（下次迭代）</option><option>P3（可选）</option></select></td></tr>
+        </tbody>
+      </table>
+      <div class="feedback" id="fb-s7q6"></div>
+    </div>
+    <div class="q-footer">
+      <button class="btn-check" onclick="checkClassify('s7q6')">提交答案</button>
+      <span class="answered-badge" id="done-s7q6">✓ 已作答</span>
+    </div>
+  </div>
+  <!-- Q7-7 -->
+  <div class="q-card" id="card-s7q7">
+    <div class="q-header"><span class="q-num">7-7</span><span class="q-type-badge">多选题</span><div class="q-title">新品上线后应立刻执行哪些操作？</div></div>
+    <div class="q-body">
+      <div class="q-stem">新品 Listing 优化完成后上线，以下哪些是应该<em>立刻</em>执行的行动？（多选）</div>
+      <div class="options" id="opts-s7q7">
+        <label class="option-label"><input type="checkbox" name="s7q7" value="A"><span class="option-text">A. 立即投入广告，在目标词下喂数据，加速系统更新意图标签</span></label>
+        <label class="option-label"><input type="checkbox" name="s7q7" value="B"><span class="option-text">B. 等 2-4 周后看自然排名变化，确认方向对了再投广告</span></label>
+        <label class="option-label"><input type="checkbox" name="s7q7" value="C"><span class="option-text">C. 检查实际抓取的 URL 五词根是否与设计预期一致</span></label>
+        <label class="option-label"><input type="checkbox" name="s7q7" value="D"><span class="option-text">D. 检查视觉内容是否和标题/五点的意图信号一致（图文矛盾立刻修复）</span></label>
+        <label class="option-label"><input type="checkbox" name="s7q7" value="E"><span class="option-text">E. 每天调整 Listing，快速迭代优化</span></label>
+      </div>
+      <div class="feedback" id="fb-s7q7"></div>
+    </div>
+    <div class="q-footer">
+      <button class="btn-check" onclick="checkMulti('s7q7')">提交答案</button>
+      <span class="answered-badge" id="done-s7q7">✓ 已作答</span>
+    </div>
+  </div>
+  <div class="section-score" id="score-s7"></div>
+</section>
+
+<!-- ═══════════════════ 快速自测 20 题 ═══════════════════ -->
+<section class="section" id="final">
+  <div class="section-header">
+    <h2>全课程自测 · 20 题</h2>
+    <p>全部作答后统一提交，立刻查看得分与每题解析</p>
+    <div class="section-progress"><div class="progress-bar"><div class="progress-fill" id="prog-final" style="width:0%"></div></div><span class="progress-text" id="pt-final">0 / 30</span></div>
+  </div>
+
+  <div class="final-intro">
+    <h3>使用说明</h3>
+    <p>每道题判断「对」或「错」，完成全部 30 题后点击「提交答案」，立即显示得分和每题解析。</p>
+  </div>
+
+  <div class="tf-list" id="tfList"></div>
+
+  <div class="final-btn-row">
+    <button class="btn-submit-all" onclick="submitFinal()">提交答案</button>
+    <button class="btn-reset" onclick="resetFinal()">重新作答</button>
+  </div>
+
+  <div class="final-score-display" id="finalScore">
+    <div class="score-big" id="scoreBig">—</div>
+    <div class="score-label">答对 / 共 30 题</div>
+    <div class="score-grade" id="scoreGrade"></div>
+  </div>
+</section>
+
+</main>
+
+<script>
+// ── Question data (moved out of onclick to avoid HTML attr quote conflicts) ──
+const QDATA = {
+  choice: {
+    's1q4': { correct: 'B', exp: `B 正确。capable_of 描述"商品能做什么"（能力层），直接回应用户"这个能解决我的问题吗"的核心问题，是最直接的购买驱动关系。used_for_eve 是场景关系（什么情况下用）、xIs_a 是用户身份认同、used_with 是配套关系，都是辅助信号。` },
+    's1q5': { correct: 'B', exp: `B 正确。FolkScope 研究（ACL 2023）发现 Typicality 和 Plausibility 是独立维度（ρ=0.32，相关性低）。典型性数据：CapableOf/UsedFor ~90%，SimilarTo ~56%，DefinedAs ~47%。写 Listing 时优先选 Typicality 高的关系类型（capable_of, used_for_func），而不是"感觉合理"的表达。` },
+    's2q4': { correct: 'B', exp: `B 正确。查询改写是单向的：用户的 tail query（长尾/非标准词）→ 系统改写为 head query（行为数据丰富的标准词）。反向（head→tail）不成立。运营含义：标题/URL 里的词要接近 head query，才能成为改写系统的"落点"，被更多 tail query 改写后关联到。` },
+    's2q5': { correct: 'B', exp: `B 正确。Context-Aware Query Rewriting（EMNLP 2022）：系统追踪会话内平均 4 条历史 query，通过图注意力网络建模会话上下文，推断用户意图漂移。意义：用户先搜 "anti-theft bag" 再搜 "sling bag"，系统会把两次搜索关联，推断真实需求组合——标题后半段写的场景词，会在用户多次搜索中被累积识别。` },
+    's3q4': { correct: 'C', exp: `C 正确。S② 是量化结果层——具体数字、机制、可验证的能力描述（"Fits 15.6 inch laptop"、"YKK zippers rated 5,000+ cycles"）。这类内容最被 Rufus 引用，用于直接回答用户具体问题（"这个包能放我的笔记本吗？"）。A9 处理词法匹配，COSMO 处理意图标签，Filter 系统处理属性筛选。` },
+    's3q6': { correct: 'B', exp: `B 更有价值。痛点分三层：功能层（需要某功能）→ 行为层（具体情境中的麻烦）→ 情绪/心理层（深层感受和状态）。B 触发 COSMO 的 xWant 节点（用户主语，深层状态），同时触发 used_in_loc（机场）和 xIs_a（旅行者），让目标用户强烈认同"这说的就是我"。A 只停留在功能层，COSMO 识别到的信号层次浅，用户共鸣弱。` },
+    's4q4': { correct: 'B', exp: `B 最准确。Canonical URL 从标题最前端直接截取：按词序过滤虚词（for, with, the 等），有效词根顺序进入 URL slug。你把什么词放在标题最前面，URL 就锁什么身份——系统不做"智能选词"，就是顺序截取。这是卖家完全可以主动控制的。` },
+    's4q5': { correct: 'B', exp: `B 正确。系统对非品牌词（品类词/属性词/场景词）做词序等价处理——"anti-theft sling bag" ≡ "sling bag anti-theft"，对系统等价。但品牌词不规范化："NIID"和"N-IID"是不同词根。实际操作：非品牌词不必刻意调整词序，系统自动等价；但品牌词必须在标题和 ST 里精确拼写，拼写差异会被视为不同词根。` },
+    's5q4': { correct: 'D', exp: `D 正确。Bullet 5 是"第二个 S" 扩展层，部署次级场景、次级人群、礼品意图。礼品词在此部署可被 COSMO 识别为 used_for_eve: gift giving，也可被 Rufus 关联到"这个适合送礼吗"的问题。Bullet 1（定义S①/机制）、Bullet 2（场景/人群/痛点）、Bullet 3（差异化）、Bullet 4（量化S②/参数）各有专属任务，礼品词不应占用这些核心位置。` },
+    's5q6': { correct: 'B', exp: `B 正确。co-click 是指同一商品在系统内有多条可访问路径（Q&A路径 + 搜索路径）。当两条路径的用户都产生点击行为，系统关联这两条信号，形成更强的语义训练信号。运营含义：如果你的 Bullet/A+ 触发了 HC Query 和 Q&A Widget，就产生 co-click 信号，强化商品在相关词下的语义匹配权重。` },
+    's6q4': { correct: 'C', exp: `C 正确。FABRIC（EMNLP 2025）研究宽泛查询的多标签分类：一个宽泛词同时属于多个品类标签，系统在每个标签下分别处理和拍卖。"bag" 可能被标记为 [sling bag, tote bag, backpack, crossbody bag...] 等多个标签，各自参与排序和广告拍卖。运营含义：ST 里放宽泛词可以让商品进入这个多标签展示范围，是额外的曝光入口。` },
+    's6q6': { correct: 'B', exp: `B 正确。Amazon 多模态系统同时处理文字和图片信号。标题写 business travel，系统打上 used_for_eve: business travel 标签；但图片全是户外徒步场景，视觉系统识别到 outdoor，打上 used_for_eve: outdoor/hiking。两套标签冲突，系统对商品意图定位模糊，长期影响在 business travel 相关词下的匹配权重。图文矛盾是视觉层最常见也最危险的错误。` },
+    's7q4': { correct: 'B', exp: `B 正确。行为权重（SIGIR 2023）：加购=6.86 > 购买=4.51 > 点击=1.05。加购权重最高，因为加购是"强烈兴趣+尚在对比"的高质量信号，反映用户的持续意图；购买有时受促销/冲动因素驱动，信号纯度反而不如持续加购稳定；点击权重最低，多数点击是探索性的。` },
+    's7q5': { correct: 'B', exp: `B 正确。Session-Aware Product Filter Ranking（ICLR 2024）：用户在本次购物会话中之前使用过的 Filter（如选了 Color: Black），会影响后续搜索的 Filter 候选池顺序——系统认为用户偏好有延续性。运营含义：后台属性字段准确填写，让商品进入正确的 Filter 候选池；用户越细化搜索，系统越会推送相关 Filter，形成漏斗加速效应。` },
+    's1q1': { correct: 'B', exp: `B 正确。A9 + COSMO + Rufus 三层系统的底层逻辑是意图匹配：用户搜索词背后有一个"想解决什么问题"的意图，系统的任务是找到最像答案的商品。关键词堆砌（选项 A）会让系统识别不到清晰意图，甚至触发降权。关键词是传递意图的信号，不是目的。` },
+    's2q1': { correct: 'C', exp: `C 正确。wedding dress 的隐式属性强度最高：白色、正式款式、长裙、新娘场景、婚礼氛围——这些属性用户完全没有说出来，但系统和购物者都默认存在，几乎没有商量余地。其他选项的隐式属性也有，但自由度更大（防水跑步鞋颜色、款式可变；防盗包的"低调"程度也因人而异）。` },
+    's2q3': { correct: 'C', exp: `C 正确。牙签（toothpick）是极低考量度词——用户无需研究，直接购买，决策几乎是零成本的。其他三个都是高考量度词：相机需要深度研究（A）、人体工学桌椅涉及健康和长期使用（B）、防盗旅行包需要对比验证功能（D）。注意：高考量度不等于高搜索量，判断依据是"用户需要多少信息才能放心下单"。` },
+    's3q1': { correct: 'B', exp: `B 正确。SSPPS 里 S① 应选 capable_of 典型性最高、最能形成差异化的卖点。分析各项：A（颜色）是基础属性，属于 SimilarTo 关系，典型性低（56%），不适合主打。C（400g）和 D（13寸）都是重要属性，但应作为 S②（量化解决方案）而非 S①（核心定义）。B（防盗机制）是这款包最独特的 capable_of 能力，在防盗包细分品类里典型性最高，能形成稳定的差异化品类标签。` },
+    's4q1': { correct: 'B', exp: `B 正确。B 符合两段式结构：前段（BrandX Anti-Theft Sling Bag for Men）锁定品牌+S①+品类+人群，URL 五词根清晰；后段（Fits 15.6" Laptop, TSA Friendly, Travel & Commute Crossbody）展开 S② 量化+场景+同义词。A 的问题：形容词堆砌，URL 五词根全是无用词。C 的问题：后段重复了前段词根（anti-theft、sling bag、crossbody、men），浪费意图扩展空间。D 的问题：无前后段分隔，所有词堆在一起，系统识别不到主轴。` },
+    's5q2': { correct: 'B', exp: `B 正确。三要素分析：B 的场景✅（airports and tourist crowds，具体地点）、人群✅（business travelers，明确）、痛点✅（No more clutching your bag or glancing back，真实情绪状态）。A 的问题：场景"daily use"泛化，痛点为空。C 的问题：场景"travel"泛化，人群为空，"safe"是结果不是痛点表达。Bullet 2 三要素缺一，COSMO 的 used_for_eve / xIs_a / xWant 三个节点就会有缺失。` },
+    's6q1': { correct: 'B', exp: `B 危害最大。根据 Semantic Product Search（KDD 2019）的研究，"曝光但未购买"是软性负向训练样本：如果主图在广告投放的某个词下持续被展示但用户不点击，系统会把这对"词-商品"组合作为弱负样本，长期累积后降低该词和商品的语义匹配权重。这不只是 CTR 问题，而是在主动积累负向训练信号。其他三个问题也是问题，但不涉及这个系统级的负向机制。` },
+    's6q2': { correct: 'B', exp: `B 正确。B 的结构：宽词根（anti theft bag、sling bag、crossbody bag）= RL 改写系统的收敛目标，确保覆盖大量长尾词的改写结果；结果词（pickpocket proof bag、rfid blocking bag、fits 13 inch laptop）= 离加购最近的用户在搜的词，行为权重高。A 的问题：过于精确的限定词（for business men traveling internationally for commute work）让这条词组成为一个 tail query 而不是 head query 收敛目标，RL 改写系统不会以此为目标词。` },
+    's7q2': { correct: 'C', exp: `C 正确。自然信号稳定变化通常需要 2-4 周。系统需要通过广告和自然流量积累足够的新行为数据（点击、加购、购买），才会更新商品的意图标签权重。优化后立即投广告"喂数据"可以加速这个过程，但 2-3 天内就否定方向（A）是常见错误——你否定的可能是一个正确方向。等 2-3 个月（D）又过于保守，实际会错过调优窗口。` },
+  },
+  classify: {
+    's1q7': ['商品主语','用户主语','商品主语','用户主语','用户主语'],
+    's2q7': ['显式（用户已说出）','显式（用户已说出）','隐式（用户未说但默认存在）','隐式（用户未说但默认存在）','隐式（用户未说但默认存在）'],
+    's3q5': ['capable_of','used_for_eve / used_in_loc','xIs_a / used_for_aud','xWant','Rufus QA 引用层'],
+    's4q6': ['模式 C（人群/状态是第一限定条件）','模式 A（细分品名不含场景，需要补用途）','模式 B（品名已带一个限定维度）'],
+    's5q5': ['Bullet 1','Bullet 2','Bullet 3','Bullet 4','Bullet 5'],
+    's6q5': ['第1行','第2行','第3行','第4行','第5行'],
+    's7q6': ['P0（立即修）','P2（下次迭代）','P3（可选）','P1（本周）','P1（本周）'],
+    's1q2': ['基础词语索引，把商品和用户搜索词做初步匹配','理解商品适合什么场景、人群和问题，打意图标签','回答用户复杂问题，找到最像答案的内容，促成转化'],
+    's2q2': ['L1 模糊意图','L3 属性卖点','L4 特定场景','L6 品牌型号','L5 目标人群'],
+    's4q2': ['head query（标准词，行为数据丰富）','tail query（长尾词，行为数据稀少）','tail query（长尾词，行为数据稀少）','head query（标准词，行为数据丰富）'],
+    's7q1': ['意图信号问题（标题/ST 方向偏了）','视觉吸引力问题（主图/标题后段）','内容说服力问题（Bullet 量化/信任不足）','词精准度问题（词引来的不是目标用户）','一比竞争问题（竞品整体更强）'],
+  },
+  multi: {
+    's1q6': { correct: ['A','C','E'], exp: `商品主语关系（以商品为主语）：capable_of（商品能做什么）、used_for_func（核心功能）、used_for_eve（适合什么事件）、used_in_loc（在哪里使用）、used_in_body（身体部位）、used_with（搭配）、used_on（用在什么上）、used_as（作为什么使用）、used_to（用于）、is_a（品类归属）、used_by（被谁使用）。用户主语关系：xIs_a（我是什么人）、xWant（我想要什么）、xInterested_in（我对什么感兴趣）、used_for_aud（适合什么受众）。B（xIs_a）和 D（xWant）是用户主语关系。` },
+    's2q6': { correct: ['A','B','C','E'], exp: `wedding dress 的高强度隐式属性：白色/象牙白（颜色默认值）、正式款式（婚礼场合要求）、长裙（礼服形式）、新娘/婚礼场景（使用场合）。D（棉质）是错的——wedding dress 的材质通常是蕾丝、缎面等，棉质反而是反直觉的。隐式查询解析（SIGIR 2023）：84% 查询含隐式属性，wedding dress 是典型的高隐式属性词。` },
+    's3q7': { correct: ['A','B','C','E'], exp: `有效 S② 是 Rufus 的原材料，核心条件：可量化（含数字/规格）、具体可验证（用户能立刻理解）、简短可直接转述（2-6词）、描述机制而非修辞（"hidden back-access zipper"比"高质量防盗"可引用得多）。D（感叹号/情绪化）不增加可引用性——"超好用！"无法作为"这个包能防盗吗"的答案。` },
+    's4q7': { correct: ['A','C','D','E'], exp: `后半段任务是扩展意图覆盖，不是重复前段。A（量化S②）→ Rufus 可引用具体参数。C（场景词）→ 激活 COSMO used_for_eve/used_in_loc 节点。D（人群词）→ 激活 COSMO xIs_a/used_for_aud 节点。E（次要属性/同义词）→ 扩展词法匹配覆盖。B（重复前段词根）是常见错误——浪费字符，对系统没有增量信号价值，词序等价处理使重复词根毫无意义。` },
+    's5q7': { correct: ['A','B','C','E'], exp: `Rufus 引用条件：短（2-6词可直接转述）、量化（数字/规格/可验证）、机制描述（而非修辞形容词）、场景具体（用户可对号入座）。D（感叹号/情绪化）不增加可引用性，反而降低内容的"答案可信度"——"高质量！超好用！"无法回答"这个包能防盗吗"。` },
+    's6q7': { correct: ['A','C','D','F'], exp: `第3行专放属性信号：功能属性（材质/防水/五金件 → 进 Filter 候选池）+ 感知类隐式属性（lightweight, slim, low profile, discreet → COSMO 隐式属性解析目标）。B（sling bag men，人群词）→ 属于第2行。E（worry free travel bag，焦虑解除词）→ 属于第4行。第3行和后台 Product Type / Item Type 字段要对齐，才能让商品进入正确的 Filter 候选池。` },
+    's7q7': { correct: ['A','C','D'], exp: `上线后立刻：A（投广告喂数据）→ 新品无历史数据，广告是最快给系统提供意图信号的方式。C（验证URL五词根）→ 确认实际抓取的词根符合预期，上线即验证。D（验证视觉一致性）→ 图文矛盾会导致 COSMO 意图标签冲突，要立刻修复。B（消极等待）→ 错：应主动投广告加速学习，不是等自然流量。E（每天调整）→ 错：每次改动都重置系统学习进度，2-4周内保持稳定，等数据再决策。` },
+  }
+};
+
+// ── State ──────────────────────────────────────────────
+const state = {
+  answered: {},   // qId -> true/false/null (null = open)
+  scores: {}      // sectionId -> {correct, total}
+};
+
+const TOTAL_QUESTIONS = 22; // 7 sections × 3 + 20 final = 41, auto-grade = 22
+
+// ── Tab switching ──────────────────────────────────────
+function switchSection(id) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  document.querySelector(`[data-section="${id}"]`).classList.add('active');
+  updateOverall();
+}
+
+// ── Single choice ──────────────────────────────────────
+function checkChoice(qId) {
+  const d = QDATA.choice[qId];
+  const correct = d.correct;
+  const explanation = d.exp;
+  const selected = document.querySelector(`input[name="${qId}"]:checked`);
+  if (!selected) { alert('请先选择一个选项'); return; }
+
+  const val = selected.value;
+  const isCorrect = val === correct;
+  const opts = document.getElementById(`opts-${qId}`);
+  const labels = opts.querySelectorAll('.option-label');
+
+  labels.forEach(lbl => {
+    lbl.querySelector('input').disabled = true;
+    const v = lbl.querySelector('input').value;
+    if (v === correct) lbl.classList.add('reveal-correct');
+    if (v === val && val !== correct) lbl.classList.add('wrong');
+  });
+
+  const fb = document.getElementById(`fb-${qId}`);
+  fb.className = `feedback show ${isCorrect ? 'correct' : 'wrong'}`;
+  fb.innerHTML = `<span class="feedback-icon">${isCorrect ? '✓ 正确！' : '✗ 不对。'}</span>${explanation}`;
+
+  document.querySelector(`[onclick*="'${qId}'"]`).disabled = true;
+  const done = document.getElementById(`done-${qId}`);
+  done.classList.add('show');
+
+  state.answered[qId] = isCorrect;
+  updateSection(qId.slice(0,2));
+}
+
+// ── Classify table ─────────────────────────────────────
+function checkClassify(qId) {
+  const answers = QDATA.classify[qId];
+  let correct = 0;
+  const total = answers.length;
+
+  answers.forEach((ans, i) => {
+    const sel = document.getElementById(`cl-${qId}-${i+1}`);
+    if (!sel) return;
+    const val = sel.value;
+    const td = sel.parentElement;
+    sel.disabled = true;
+    if (val === ans) {
+      td.classList.add('cell-correct');
+      correct++;
+    } else {
+      td.classList.add('cell-wrong');
+      sel.insertAdjacentHTML('afterend', `<br><small style="color:var(--green);font-weight:600">✓ ${ans}</small>`);
+    }
+  });
+
+  const isAllCorrect = correct === total;
+  const fb = document.getElementById(`fb-${qId}`);
+  fb.className = `feedback show ${isAllCorrect ? 'correct' : 'wrong'}`;
+  fb.innerHTML = `<span class="feedback-icon">${isAllCorrect ? '✓ 全部正确！' : `✗ 答对 ${correct}/${total} 项。`}</span>${correct < total ? '红色项已显示正确答案。' : ''}`;
+
+  document.querySelector(`[onclick*="'${qId}'"]`).disabled = true;
+  document.getElementById(`done-${qId}`).classList.add('show');
+
+  state.answered[qId] = isAllCorrect;
+  updateSection(qId.slice(0,2));
+}
+
+
+// ── Multiple choice ────────────────────────────────────
+function checkMulti(qId) {
+  const d = QDATA.multi[qId];
+  const correctSet = new Set(d.correct);
+  const explanation = d.exp;
+  const selected = [...document.querySelectorAll(`input[name="${qId}"]:checked`)].map(i => i.value);
+  if (selected.length === 0) { alert('请至少选择一个选项'); return; }
+
+  const selectedSet = new Set(selected);
+  const isCorrect = correctSet.size === selectedSet.size && [...correctSet].every(v => selectedSet.has(v));
+
+  const opts = document.getElementById(`opts-${qId}`);
+  opts.querySelectorAll('.option-label').forEach(lbl => {
+    const v = lbl.querySelector('input').value;
+    lbl.querySelector('input').disabled = true;
+    if (correctSet.has(v)) lbl.classList.add('reveal-correct');
+    if (!correctSet.has(v) && selectedSet.has(v)) lbl.classList.add('wrong');
+  });
+
+  const fb = document.getElementById(`fb-${qId}`);
+  fb.className = `feedback show ${isCorrect ? 'correct' : 'wrong'}`;
+  fb.innerHTML = `<span class="feedback-icon">${isCorrect ? '✓ 全选正确！' : '✗ 未完全选对。'}</span>${explanation}`;
+
+  document.querySelector(`[onclick*="'${qId}'"]`).disabled = true;
+  document.getElementById(`done-${qId}`).classList.add('show');
+  state.answered[qId] = isCorrect;
+  updateSection(qId.slice(0,2));
+}
+
+// ── Open question ──────────────────────────────────────
+function markOpen(qId) {
+  document.querySelector(`[onclick="markOpen('${qId}')"]`).disabled = true;
+  document.getElementById(`done-${qId}`).classList.add('show');
+  state.answered[qId] = null; // null = open (counts as answered)
+  updateSection(qId.slice(0,2));
+}
+
+// ── Ref toggle ─────────────────────────────────────────
+function toggleRef(id, btn) {
+  const el = document.getElementById(id);
+  el.classList.toggle('show');
+  btn.classList.toggle('open');
+  btn.querySelector('span') && (btn.childNodes[2].textContent = el.classList.contains('show') ? ' 收起参考答案' : ' 查看参考思路');
+}
+
+// ── Section progress ───────────────────────────────────
+function updateSection(sid) {
+  const section = document.getElementById(sid);
+  if (!section) return;
+  const cards = section.querySelectorAll('.q-card');
+  const total = cards.length;
+  const done = [...cards].filter(c => state.answered[c.id.replace('card-','')]  !== undefined).length;
+  const pct = Math.round(done / total * 100);
+
+  const prog = document.getElementById(`prog-${sid}`);
+  const pt = document.getElementById(`pt-${sid}`);
+  if (prog) prog.style.width = pct + '%';
+  if (pt) pt.textContent = `${done} / ${total}`;
+
+  // Badge
+  const badge = document.getElementById(`b${sid.slice(1)}`);
+  if (badge) {
+    if (done === total) {
+      badge.closest('.tab-btn').classList.add('done');
+      badge.textContent = '✓';
+    } else if (done > 0) {
+      badge.closest('.tab-btn').classList.add('partial');
+      badge.textContent = done;
+    }
+  }
+
+  // Section score
+  const scoreEl = document.getElementById(`score-${sid}`);
+  if (scoreEl && done === total) {
+    const correct = [...cards].filter(c => state.answered[c.id.replace('card-','')] === true).length;
+    const open = [...cards].filter(c => state.answered[c.id.replace('card-','')] === null).length;
+    scoreEl.classList.add('show');
+    scoreEl.innerHTML = `本期完成 ✓ &nbsp;|&nbsp; 客观题得分 ${correct}/${total - open}，开放题 ${open} 题请对照参考答案自评。`;
+  }
+
+  updateOverall();
+}
+
+function updateOverall() {
+  const answered = Object.keys(state.answered).length;
+  document.getElementById('overallScore').textContent = `${answered} / 79 题已答`;
+}
+
+// ── Final 20Q ─────────────────────────────────────────
+const tfData = [
+  { q: 'Search Terms 词越多越好，要把每行字符用满', a: false, exp: '错。ST 要按五行部署模型分层放置有策略价值的词，堆满无关词会稀释意图信号密度，也可能引入错误流量。' },
+  { q: '标题前半段的非品牌词，词序不同在系统里会被视为不同含义', a: false, exp: '错。系统对非品牌词做词序规范化处理，"anti-theft sling bag" 和 "sling bag anti-theft" 被视为等价。品牌词才不做规范化，必须精确。' },
+  { q: 'Bullet 2 写了场景和人群，但没有写痛点，COSMO 三要素就不完整', a: true, exp: '对。Bullet 2 必须同框覆盖场景（used_for_eve/loc）、人群（xIs_a）、痛点（xWant）三个 COSMO 节点，缺一会导致对应意图标签缺失。' },
+  { q: '高搜索量的词一定是高考量度词（HC Query）', a: false, exp: '错。HC Query 的判断依据是意图复杂度（用户需要多少信息才能决策），不是搜索量。"rubber mats for gym" 搜索量可能很高，但决策简单，不是 HC Query。' },
+  { q: 'ST 第 1 行放的词，应该是"用户最可能原始搜索的精确短语"', a: false, exp: '错。ST 第 1 行应该是 RL 改写系统的收敛目标词（宽词根）+ 离加购最近的结果词，而不是用户的长尾原始表达。宽词根才能覆盖大量 tail query 被改写后的结果。' },
+  { q: '广告在某个词下的 CTR 持续很低，这不影响该词与商品的长期语义匹配权重', a: false, exp: '错。"曝光但未购买"是软性负向训练样本（KDD 2019）。持续低 CTR 会让系统把这对"词-商品"组合作为弱负样本，长期积累后降低语义匹配权重。' },
+  { q: '视觉里的场景图，只要"好看"就行，真实环境与摆拍棚照对系统来说没区别', a: false, exp: '错。COSMO 视觉识别会判断背景场景。标题写 "for travel" 但场景图是工作室白墙，COSMO 识别到的是 studio，不是 travel，意图标签矛盾。' },
+  { q: 'SSPPS 建模里，S① 唯一性原则是说标题里只能写一个卖点', a: false, exp: '错。S① 唯一性是指 SSPPS 模型只确定"一个最核心的差异化卖点"作为主轴，标题里可以出现多种信息（场景、人群、量化），但它们都应该围绕同一个 S① 主叙事。' },
+  { q: 'Rufus 更倾向于引用"大容量、质量好"这类描述性短语', a: false, exp: '错。Rufus 引用的是"具体 + 可验证 + 可直接转述"的短语，如"fits 15.6" laptop" 或 "YKK zippers rated for 5,000+ cycles"。泛化形容词无法被 Rufus 作为问题的答案引用。' },
+  { q: '用户"加购"行为的系统权重，比"购买"行为的权重更高', a: true, exp: '对。行为权重：加购=6.86，购买=4.51，点击=1.05（SIGIR 2023）。加购代表"强烈兴趣但尚未下单"的主动行为，系统视为高质量信号。' },
+  { q: 'Product Type 填写错误只影响品类归属，不影响搜索词匹配', a: false, exp: '错。Product Type 是隐式属性推断的第一个节点。错误的 Product Type 会导致所有隐式属性推断偏移，让系统误解商品的用途和属性，影响意图标签的整体准确性。' },
+  { q: 'A+ 内容可以用不同于标题和五点的 S① 叙事，来吸引更多类型的用户', a: false, exp: '错。A+ 的主叙事必须和标题、五点保持一致（同一个 S①），否则系统意图标签会混乱，用户也会因为叙事不连贯而降低信任。A+ 是叙事放大层，不是重新定义层。' },
+  { q: '查询改写系统可以把 head query 改写成 tail query（双向改写）', a: false, exp: '错。改写方向是单向的：tail query → head query。系统把用户的长尾词/非标准词改写成行为数据更丰富的标准词，反向不成立。' },
+  { q: 'Bullet 3 的"差异化"必须直接点名竞品才有说服力', a: false, exp: '错。不需要也不应该点名竞品。描述"行业通常的方案的通病"即可——用户能自行对应到他们考虑过的替代方案。点名竞品在亚马逊平台上还可能违反政策。' },
+  { q: '新品因为没有历史行为数据，查询改写系统对它完全无法工作', a: false, exp: '错。查询改写系统正是新品的加速器——它把用户的 tail query 改写成 head query，然后和有 head query 词汇的新品 Listing 做匹配。标题/ST 里的词越接近 head query，新品越快被系统关联到相关流量。' },
+  { q: '视频是整个 Listing 里传递 S② 和情绪共鸣效果最强的位置', a: true, exp: '对。视频能完整呈现"问题→介入→解决→情绪结果"的叙事链路，同时被 Rufus 多模态系统识别，是 S② 的最强视觉载体。' },
+  { q: '宽泛词（如 "bag"）因为竞争太激烈，ST 里不应该放', a: false, exp: '错。宽泛词在 FABRIC 多标签分类系统里会被拆解成多个品类标签分别拍卖。ST 里放品类宽词，帮助商品被纳入宽泛词触发的多标签展示范围，是额外曝光入口。' },
+  { q: 'HC Query 的识别主要依据是搜索量大小', a: false, exp: '错。HC Query 的识别依据是行为特征（用户在搜索后花多少时间、查看多少商品、最终购买率等反映决策复杂度的特征），不是搜索量。系统识别精准率 96%（ACL 2024）。' },
+  { q: 'SSPPS 的同一主叙事（同一个 S①）应贯穿标题、五点、视觉、A+ 所有内容', a: true, exp: '对。所有字段围绕同一 S① 形成一致的意图信号，COSMO 打出的标签才会准确且稳定。各字段讲不同故事会导致系统意图标签混乱，用户认知也会分散。' },
+  { q: '优化 Listing 后 3 天数据没有变化，就应该立刻否定这个方向重新改', a: false, exp: '错。自然信号稳定变化需要 2-4 周。3 天的窗口太短，系统还没有积累足够的新行为数据来更新意图标签权重。过早否定正确方向是常见运营失误。' },
+  { q: 'COSMO 知识图谱中，capable_of 是对购买决策影响最直接的关系类型', a: true, exp: '对。capable_of 描述商品具备某种能力，直接回应用户"这个能解决我的问题吗"，是购买驱动力最强的节点。Typicality 数据：CapableOf 约 90%，远高于 SimilarTo（56%）和 DefinedAs（47%）。' },
+  { q: 'Amazon 会话感知系统追踪用户本次购物会话内平均 4 条历史查询来推断意图', a: true, exp: '对。Context-Aware Query Rewriting（EMNLP 2022）：系统通过图注意力网络建模会话内平均 4 条历史 query，推断意图漂移。标题后半段的场景词，会在用户多次搜索的会话中被累积识别。' },
+  { q: '用户搜索 "wedding dress"，系统不会推断出"白色"这个属性，因为用户没有写出来', a: false, exp: '错。隐式查询解析（SIGIR 2023）：84% 查询含隐式属性。"白色"是 wedding dress 的高强度隐式属性——用户和系统都默认存在，几乎没有商量余地。需要在 Listing 视觉/文字中主动展示这些隐式属性。' },
+  { q: 'RL 强化学习改写系统，每个查询平均生成超过 10 个改写变体', a: false, exp: '错。实际数据（CIKM 2023）：三种改写策略集成后，每个 query 平均生成 7.75 个变体（NBS: 2.79，DBS: 3.54，RL: 4.05）。不是 10 个以上。' },
+  { q: '新品上线后应立刻投入广告，而不是等待自然流量', a: true, exp: '对。新品没有历史行为数据，查询改写系统依赖行为数据做关联。广告是最快给系统提供意图训练信号的方式——广告点击/加购/购买数据会直接影响商品的意图标签权重。等自然流量会大幅延迟系统学习。' },
+  { q: 'Bullet 5 的主要功能是部署次级场景和礼品词，而不是重复 Bullet 1 的核心卖点', a: true, exp: '对。Bullet 5 是"第二个 S"扩展层，专门覆盖次级场景、次级人群、礼品意图。重复 Bullet 1 的内容会浪费宝贵的意图覆盖空间，且对系统没有增量信号价值。' },
+  { q: 'ST 第 3 行的属性词无需和后台 Product Type 字段对应，两者互相独立', a: false, exp: '错。Session-Aware Filter Ranking 研究：后台 Product Type / Item Type 字段决定 Filter 候选词池。ST 第 3 行的属性词要和后台属性字段对齐，商品才能进入对应 Filter 的候选池，被用户筛选到。两者是配套关系，不是独立的。' },
+  { q: '"曝光但未购买"对商品的语义匹配权重影响是中立的，不会造成负向影响', a: false, exp: '错。Semantic Product Search（KDD 2019）："曝光但未购买"是软性负向训练样本。广告在某词下持续曝光但用户不点击/不购买，系统会把这对"词-商品"组合作为弱负样本，长期积累后降低语义匹配权重。这是投错词/主图不对号造成的系统级损耗。' },
+  { q: 'co-click 信号意味着：同一商品可通过 Q&A 和搜索两条路径访问，会产生更强的训练信号', a: true, exp: '对。co-click 是指商品在系统内有多条可访问路径（Q&A路径 + 搜索路径），当两条路径都产生用户行为，系统将两条信号关联，形成更强的语义训练信号。写好 HC Query 相关内容可触发 Q&A Widget，产生 co-click，强化语义匹配。' },
+  { q: 'FABRIC 多标签系统会把宽泛词"sling bag"拆解成多个品类标签，在各品类下分别参与展示', a: true, exp: '对。FABRIC（EMNLP 2025）：宽泛查询不属于单一品类，系统给它打上多个品类标签，在每个标签下分别参与排序和广告拍卖。ST 里放宽泛词根（sling bag, crossbody bag），可以让商品进入这个多标签展示范围，获得额外曝光入口。' },
+
+];
+
+function buildFinal() {
+  const list = document.getElementById('tfList');
+  list.innerHTML = '';
+  tfData.forEach((item, i) => {
+    list.innerHTML += `
+    <div class="tf-item" id="tf-${i}">
+      <div class="tf-num">${i+1}</div>
+      <div style="flex:1">
+        <div class="tf-stem">${item.q}</div>
+        <div class="tf-choices">
+          <label class="tf-choice"><input type="radio" name="tf${i}" value="true"> 对</label>
+          <label class="tf-choice"><input type="radio" name="tf${i}" value="false"> 错</label>
+        </div>
+        <div class="tf-result" id="tfr-${i}"></div>
+      </div>
+    </div>`;
+  });
+
+  // track answered count
+  tfData.forEach((_, i) => {
+    document.querySelectorAll(`input[name="tf${i}"]`).forEach(r => {
+      r.addEventListener('change', updateFinalProgress);
+    });
+  });
+}
+
+function updateFinalProgress() {
+  const done = tfData.filter((_, i) => document.querySelector(`input[name="tf${i}"]:checked`)).length;
+  const pct = Math.round(done / 30 * 100);
+  document.getElementById('prog-final').style.width = pct + '%';
+  document.getElementById('pt-final').textContent = `${done} / 30`;
+}
+
+function submitFinal() {
+  const unanswered = tfData.filter((_, i) => !document.querySelector(`input[name="tf${i}"]:checked`)).length;
+  if (unanswered > 0) { alert(`还有 ${unanswered} 题未作答`); return; }
+
+  let correct = 0;
+  tfData.forEach((item, i) => {
+    const sel = document.querySelector(`input[name="tf${i}"]:checked`).value;
+    const isCorrect = (sel === 'true') === item.a;
+    if (isCorrect) correct++;
+
+    const card = document.getElementById(`tf-${i}`);
+    card.classList.add(isCorrect ? 'correct' : 'wrong');
+    card.querySelectorAll('input').forEach(r => r.disabled = true);
+
+    const res = document.getElementById(`tfr-${i}`);
+    res.className = `tf-result show ${isCorrect ? 'correct' : 'wrong'}`;
+    res.innerHTML = `${isCorrect ? '✓ 正确' : `✗ 答案：${item.a ? '对' : '错'}`}　${item.exp}`;
+  });
+
+  const scoreEl = document.getElementById('finalScore');
+  scoreEl.classList.add('show');
+  document.getElementById('scoreBig').textContent = `${correct} / 30`;
+  const grade = correct >= 27 ? '🎓 优秀' : correct >= 21 ? '👍 良好，可以再巩固' : correct >= 15 ? '📖 需要复习' : '🔄 建议重新学习';
+  document.getElementById('scoreGrade').textContent = grade;
+
+  // Update progress
+  document.getElementById('prog-final').style.width = '100%';
+  document.getElementById('pt-final').textContent = '30 / 30';
+  const badge = document.getElementById('bfinal');
+  badge.textContent = `${correct}✓`;
+  badge.closest('.tab-btn').classList.add(correct >= 21 ? 'done' : 'partial');
+
+  state.answered['final'] = true;
+  updateOverall();
+  scoreEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+
+function resetFinal() {
+  tfData.forEach((_, i) => {
+    document.querySelectorAll(`input[name="tf${i}"]`).forEach(r => { r.checked = false; r.disabled = false; });
+    const card = document.getElementById(`tf-${i}`);
+    card.classList.remove('correct', 'wrong');
+    document.getElementById(`tfr-${i}`).className = 'tf-result';
+  });
+  document.getElementById('finalScore').classList.remove('show');
+  document.getElementById('prog-final').style.width = '0%';
+  document.getElementById('pt-final').textContent = '0 / 20';
+  delete state.answered['final'];
+  updateOverall();
+}
+
+// ── Init ───────────────────────────────────────────────
+buildFinal();
+</script>
+</body>
+</html>
